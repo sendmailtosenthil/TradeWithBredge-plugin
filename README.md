@@ -9,7 +9,7 @@ The 3rd ask price and bid price's depth is considered. This will make sure that 
 
 
 ## How to set up (One time Process)?
-1. Open the link to download [zerodha-price-monitor.zip](https://github.com/sendmailtosenthil/TradeWithBredge-plugin/zerodha-price-monitor.zip) file
+1. Open the link to download [zerodha-price-monitor.zip](https://github.com/sendmailtosenthil/TradeWithBredge-plugin/blob/main/zerodha-price-monitor.zip) file
 2. Click on the download button
 3. ![image](https://github.com/user-attachments/assets/61333038-e20e-4de0-9f59-848e26df8a6e)
 4. Create folder called TradeWithBredge-plugin 
