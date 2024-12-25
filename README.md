@@ -9,25 +9,27 @@ The 3rd ask price and bid price's depth is considered. This will make sure that 
 
 
 ## How to set up (One time Process)?
-1. Download the [zerodha-price-monitor.zip](https://github.com/sendmailtosenthil/TradeWithBredge-plugin/zerodha-price-monitor.zip) file
-2. Create folder called TradeWithBredge-plugin 
-3. Unzip the zip file and store them in C:/TradeWithBredge-plugin
-4. Open the chrome browser.
-5. Click on three dots
-6. ![image](https://github.com/user-attachments/assets/6192bca0-17a4-4ee1-b3b1-4e1c8c1d3f44)
-7. Click on Extensions and click on Manage Extensions
-8. ![image](https://github.com/user-attachments/assets/b86e25ee-8881-469a-8e6e-a442fbf6a60e)
-9. Click on Developer Mode & should be turn on (Blue color)
-10. ![image](https://github.com/user-attachments/assets/901eb84c-cfd7-4614-93ec-c93bf21395a7)
-11. After Developer Mode is enabled, you will see Load Unpacked button available
-12. ![image](https://github.com/user-attachments/assets/dc26a5eb-a250-435e-a1f2-8d390eb75d40)
-13. Click Load unpacked button, select the folder C:/TradeWithBredge-plugin (Note: should not have any other folders inside this folder. When it has more folder then select that folder)
-14. You see the extension
-15. ![image](https://github.com/user-attachments/assets/bc40185b-bb53-4bc3-858e-eb644c4a4f6b)
-16. Click on Extensions button on the browser & click on pin of Calender Spread Price Monitor (Pin should be in blue)
-17. ![image](https://github.com/user-attachments/assets/23a002c2-08f0-4489-8662-20bc62e1bbf3)
-18. Should be able to see C icon on the toolbar. Once you see it, your set up is completed
-19. ![image](https://github.com/user-attachments/assets/7ad67a31-a451-4df1-9b39-81a946d82728)
+1. Open the link to download [zerodha-price-monitor.zip](https://github.com/sendmailtosenthil/TradeWithBredge-plugin/zerodha-price-monitor.zip) file
+2. Click on the download button
+3. ![image](https://github.com/user-attachments/assets/61333038-e20e-4de0-9f59-848e26df8a6e)
+4. Create folder called TradeWithBredge-plugin 
+5. Unzip the zip file and store them in C:/TradeWithBredge-plugin
+6. Open the chrome browser.
+7. Click on three dots
+8. ![image](https://github.com/user-attachments/assets/6192bca0-17a4-4ee1-b3b1-4e1c8c1d3f44)
+9. Click on Extensions and click on Manage Extensions
+10. ![image](https://github.com/user-attachments/assets/b86e25ee-8881-469a-8e6e-a442fbf6a60e)
+11. Click on Developer Mode & should be turn on (Blue color)
+12. ![image](https://github.com/user-attachments/assets/901eb84c-cfd7-4614-93ec-c93bf21395a7)
+13. After Developer Mode is enabled, you will see Load Unpacked button available
+14. ![image](https://github.com/user-attachments/assets/dc26a5eb-a250-435e-a1f2-8d390eb75d40)
+15. Click Load unpacked button, select the folder C:/TradeWithBredge-plugin (Note: should not have any other folders inside this folder. When it has more folder then select that folder)
+16. You see the extension
+17. ![image](https://github.com/user-attachments/assets/bc40185b-bb53-4bc3-858e-eb644c4a4f6b)
+18. Click on Extensions button on the browser & click on pin of Calender Spread Price Monitor (Pin should be in blue)
+19. ![image](https://github.com/user-attachments/assets/23a002c2-08f0-4489-8662-20bc62e1bbf3)
+20. Should be able to see C icon on the toolbar. Once you see it, your set up is completed
+21. ![image](https://github.com/user-attachments/assets/7ad67a31-a451-4df1-9b39-81a946d82728)
 
 ## How to use the plugin for your price monitoring?
 1. Login to Zerodha and go to dashboard page.
