@@ -1,0 +1,75 @@
+<html>
+<head>
+  <title>Zerodha Ticker</title>
+  <!-- <script src="d3.v7.min.js"></script> -->
+  <style>
+    .chart-container {
+      width: 800px;
+      height: 400px;
+      margin: 20px;
+    }
+    .line {
+      fill: none;
+      stroke: #2196F3;
+      stroke-width: 2px;
+    }
+    .axis {
+      font-size: 12px;
+    }
+    .form-container {
+      margin: 20px;
+      padding: 15px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: inline-block;
+      width: 150px;
+      margin-right: 10px;
+    }
+    input {
+      padding: 5px;
+      width: 200px;
+    }
+    .button-group {
+      margin-top: 15px;
+    }
+    button {
+      padding: 8px 15px;
+      margin-right: 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="form-container">
+    <div class="form-group">
+      <label for="buyScript">Buy Leg Script:</label>
+      <input type="text" id="buyScript" placeholder="Enter buy script name (SYMBOL/TOKEN)" value="NIFTY25JAN26400CE/11936258">
+    </div>
+    <div class="form-group">
+      <label for="sellScript">Sell Leg Script:</label>
+      <input type="text" id="sellScript" placeholder="Enter sell script name (SYMBOL/TOKEN)" value="NIFTY25JAN26300CE/11932930">
+    </div>
+    <div class="form-group">
+      <label for="quantity">Quantity:</label>
+      <input type="number" id="quantity" placeholder="Enter quantity" value="75">
+    </div>
+    <div class="form-group">
+      <label for="priceDiff">Price Difference:</label>
+      <input type="number" id="priceDiff" step="0.01" placeholder="Enter price difference" value="20">
+    </div>
+    <div class="button-group">
+      <button id="myButton">Alert Me</button>
+    </div>
+  </div>
+  <audio id="alertSound" src="alert.mp3" preload="auto"></audio>
+  <div id="status">Yet to Connect</div>
+  <div id="chart" class="chart-container"></div>
+  <script src="ticker.js"></script>
+  <script src="tickerPage.js"></script>
+</body>
+</html>
