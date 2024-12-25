@@ -17,9 +17,12 @@ document.getElementById('myButton').addEventListener('click', function() {
 
   const buyScript = document.getElementById('buyScript').value;
   const sellScript = document.getElementById('sellScript').value;
+  const quantity = document.getElementById('quantity').value;
   
   const buyToken = buyScript.split('/')[1];
   const sellToken = sellScript.split('/')[1];
+  const buySymbol = buyScript.split('/')[0];
+  const sellSymbol = sellScript.split('/')[0];
   
   const tokens = [buyToken, sellToken];
   
@@ -68,6 +71,9 @@ document.getElementById('myButton').addEventListener('click', function() {
             document.getElementById('status').textContent = `Difference: ${difference.toFixed(2)} Threshold: ${threshold}`;
             // Alert if the difference is less than the threshold
             if (difference <= threshold) {
+              if(document.getElementById('placeOrder').checked) {
+                placeOrder(buySymbol, sellSymbol, quantity);
+              }
               ticker.unsubscribe(tokens);
               ticker.disconnect();
               // Play the alert sound
@@ -77,6 +83,51 @@ document.getElementById('myButton').addEventListener('click', function() {
         }
     });
   }
+
+  function placeOrder(buySymbol, sellSymbol, quantity) {
+    const buyOrder = new URLSearchParams({
+      "tradingsymbol": buySymbol,
+      "exchange": "NSE",
+      "transaction_type": "BUY",
+      "order_type": "MARKET",
+      "quantity": quantity,
+      "product": "CNC",
+      "validity": "DAY"
+    });
+
+    const sellOrder = new URLSearchParams({
+      "tradingsymbol": sellSymbol,
+      "exchange": "NSE",
+      "transaction_type": "SELL",
+      "order_type": "MARKET",
+      "quantity": quantity,
+      "product": "CNC",
+      "validity": "DAY"
+    });
+  }
+
+  fetch('https://kite.zerodha.com/oms/orders/regular', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': cookie_info.authorization
+    },
+    body: buyOrder
+  }).then(response => response.json())
+  .then(data => document.getElementById('status').textContent = document.getElementById('status').textContent + ` Buy Order Success: ${data.data?.order_id}`)
+  .catch(error => document.getElementById('status').textContent = document.getElementById('status').textContent + ` Buy Order Error: ${error}`);
+  
+  fetch('https://kite.zerodha.com/oms/orders/regular', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': cookie_info.authorization
+    },
+    body: sellOrder
+})
+.then(response => response.json())
+.then(data => document.getElementById('status').textContent = document.getElementById('status').textContent + ` Sell Order Success: ${data.data?.order_id}`)
+  .catch(error => document.getElementById('status').textContent = document.getElementById('status').textContent + ` Sell Order Error: ${error}`);
 
 });
 

@@ -42,6 +42,10 @@
       margin-right: 10px;
       cursor: pointer;
     }
+    .form-group input[type="checkbox"] {
+      width: auto;
+      margin-right: 10px;
+    }
   </style>
 </head>
 <body>
@@ -60,10 +64,14 @@
     </div>
     <div class="form-group">
       <label for="priceDiff">Price Difference:</label>
-      <input type="number" id="priceDiff" step="0.01" placeholder="Enter price difference" value="20">
+      <input type="number" id="priceDiff" step="0.5" placeholder="Enter price difference" value="200">
+    </div>
+    <div class="form-group">
+      <input type="checkbox" id="placeOrder" name="placeOrder">
+      <label for="placeOrder">Yes, I understand risk of slippage in place order</label>
     </div>
     <div class="button-group">
-      <button id="myButton">Alert Me</button>
+      <button id="myButton">Alert Me / Place Order</button>
     </div>
   </div>
   <audio id="alertSound" src="alert.mp3" preload="auto"></audio>
@@ -73,3 +81,4 @@
   <script src="tickerPage.js"></script>
 </body>
 </html>
+
