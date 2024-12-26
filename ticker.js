@@ -278,6 +278,11 @@ var KiteTicker = function(params) {
 		return tokens;
 	};
 
+	this.isAlreadyConnected = function() {
+		if(!ws || ws.readyState != ws.OPEN) return false;
+		return true;
+	}
+
 	/**
 	 * Parse received binary message
 	 * @memberOf KiteTicker

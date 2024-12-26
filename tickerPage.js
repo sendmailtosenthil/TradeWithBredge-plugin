@@ -9,6 +9,34 @@ const cache = {
 };
 
 let threshold = 200
+let previousTokens = []
+
+function loadUser() {
+  if(cookie_info.user_id != null){
+    fetch('https://kite.zerodha.com/oms/user/profile/full', {
+      method: 'GET',
+      headers: {
+          'Authorization': cookie_info.authorization,
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-Kite-Version': '3.0.0',
+          'X-Kite-Userid': cookie_info.user_id,
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log('Data : ', data);
+      document.getElementById('status').textContent = 'Logged in as :' + data.data.user_id
+    })
+    .catch(error => {
+      console.log('Error : ', error);
+      document.getElementById('status').textContent = 'Reach to Telegram User @TradeWithBredge Error : ' + error;
+    });
+  } else {
+    console.log('No user id ', cookie_info.user_id);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', loadUser)
 
 document.getElementById('myButton').addEventListener('click', function() {
   threshold = parseFloat(document.getElementById('priceDiff').value);
@@ -21,21 +49,40 @@ document.getElementById('myButton').addEventListener('click', function() {
   if(!(Number(depth) >= 1 && Number(depth) <= 5)) {
     alert('Depth should be between 1 to 5')
     return false;
-  } 
+  }
   
   const buyToken = buyScript.split('/')[1];
   const sellToken = sellScript.split('/')[1];
   
-  const tokens = [buyToken, sellToken];
   
-  ticker.connect();
+  const tokens = [Number(buyToken), Number(sellToken)];
+  if(!ticker.isAlreadyConnected()){
+    ticker.connect();
+  } else {
+    connected();
+  }
   ticker.on('connect', function() {
-    console.log(`Subscribed to Tokens ${tokens}`);
-    ticker.subscribe(tokens);
-    ticker.setMode(ticker.modeFull, tokens)
+    connected();
   });
 
   ticker.on("ticks", onTicks);
+  ticker.on("error", function(e) {
+    console.log("Error", e);
+  });
+
+  function connected(){
+    if(previousTokens.length > 0){
+      console.log("Unsubscribing :", previousTokens);
+      ticker.unsubscribe(previousTokens);
+    }
+    console.log("Connected :", tokens.length);
+    if(tokens.length == 2) {
+      console.log(`Subscribed to Tokens ${tokens}`);
+      ticker.subscribe(tokens);
+      ticker.setMode(ticker.modeFull, tokens)
+      previousTokens = tokens;
+    }
+  }
   function onTicks(ticks) {
     //console.log("Ticks", ticks, tokens);
     handleTicks(ticks, tokens);
@@ -49,36 +96,43 @@ document.getElementById('myButton').addEventListener('click', function() {
     ticks.forEach(tick => {
         //console.log("Tick", tick);
         const instrumentToken = tick.instrument_token;
-        const buyDepth = tick.depth.buy;
-        const sellDepth = tick.depth.sell;
-        // console.log("Buy Depth", buyDepth);
-        // console.log("Sel Depth", sellDepth);
-        // Get the third element price for buy and sell
-        const buyPrice = buyDepth[depth-1]?.price || 0;
-        const sellPrice = sellDepth[depth-1]?.price || 0;
+        if(tick?.depth?.buy){
+          const buyDepth = tick.depth.buy;
+          const sellDepth = tick.depth.sell;
+          // console.log("Buy Depth", buyDepth);
+          // console.log("Sel Depth", sellDepth);
+          // Get the third element price for buy and sell
+          const buyPrice = buyDepth[depth-1]?.price || 0;
+          const sellPrice = sellDepth[depth-1]?.price || 0;
 
-        // Update cache based on instrument token
-        //console.log("Instrument Token", instrumentToken, tokens[0], tokens[1]);
-        if (instrumentToken == tokens[0]) {
-            cache.buy = buyPrice;
-        } else if (instrumentToken == tokens[1]) {
-            cache.sell = sellPrice;
-        }
+          // Update cache based on instrument token
+          //console.log("Instrument Token", instrumentToken, tokens[0], tokens[1]);
+          if (instrumentToken == tokens[0]) {
+              cache.buy = buyPrice;
+          } else if (instrumentToken == tokens[1]) {
+              cache.sell = sellPrice;
+          }
 
-        //console.log("Cache", JSON.stringify(cache));
-        // Check if both buy and sell prices are available and more than 0
-        if (cache.buy > 0 && cache.sell > 0) {
-            const difference = Math.abs(cache.buy - cache.sell);
+          //console.log("Cache", JSON.stringify(cache));
+          // Check if both buy and sell prices are available and more than 0
+          console.log("Buy Price", cache.buy, "Sell Price", cache.sell);
+          if (cache.buy > 0 && cache.sell > 0) {
+              const difference = Math.abs(cache.buy - cache.sell);
 
-            document.getElementById('status').textContent = `Difference: ${difference.toFixed(2)} Threshold: ${threshold}`;
-            // Alert if the difference is less than the threshold
-            if (difference <= threshold) {
-              ticker.unsubscribe(tokens);
-              ticker.disconnect();
-              // Play the alert sound
-              const alertSound = document.getElementById('alertSound');
-              alertSound.play();
-            }
+              document.getElementById('status').textContent = `Difference: ${difference.toFixed(2)} Threshold: ${threshold}`;
+              // Alert if the difference is less than the threshold
+              if (difference.toFixed(2) <= Number(threshold).toFixed(2)) {
+                console.log("Difference is less than threshold & unsubscribed tokens");
+                ticker.unsubscribe(tokens);
+                tokens.pop()
+                tokens.pop()
+                tokens.shift();
+                ticker.disconnect();
+                // Play the alert sound
+                const alertSound = document.getElementById('alertSound');
+                alertSound.play();
+              }
+          }
         }
     });
   }
@@ -93,6 +147,7 @@ chrome.runtime.sendMessage({action: 'getCookies'}, (response) => {
   cookie_info.authorization = `enctoken ${enctoken}`;
   
   if (user_id && enctoken && ticker == null) {
+    loadUser();
     if(ENV == 'prod') {
       console.log("Connecting to Kite Ticker");
       ticker = new KiteTicker({
