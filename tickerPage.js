@@ -17,6 +17,11 @@ document.getElementById('myButton').addEventListener('click', function() {
 
   const buyScript = document.getElementById('buyScript').value;
   const sellScript = document.getElementById('sellScript').value;
+  const depth = document.getElementById('depth').value;
+  if(!(Number(depth) >= 1 && Number(depth) <= 5)) {
+    alert('Depth should be between 1 to 5')
+    return false;
+  } 
   
   const buyToken = buyScript.split('/')[1];
   const sellToken = sellScript.split('/')[1];
@@ -49,15 +54,15 @@ document.getElementById('myButton').addEventListener('click', function() {
         // console.log("Buy Depth", buyDepth);
         // console.log("Sel Depth", sellDepth);
         // Get the third element price for buy and sell
-        const thirdBuyPrice = buyDepth[2]?.price || 0;
-        const thirdSellPrice = sellDepth[2]?.price || 0;
+        const buyPrice = buyDepth[depth-1]?.price || 0;
+        const sellPrice = sellDepth[depth-1]?.price || 0;
 
         // Update cache based on instrument token
         //console.log("Instrument Token", instrumentToken, tokens[0], tokens[1]);
         if (instrumentToken == tokens[0]) {
-            cache.buy = thirdBuyPrice;
+            cache.buy = buyPrice;
         } else if (instrumentToken == tokens[1]) {
-            cache.sell = thirdSellPrice;
+            cache.sell = sellPrice;
         }
 
         //console.log("Cache", JSON.stringify(cache));
@@ -88,11 +93,16 @@ chrome.runtime.sendMessage({action: 'getCookies'}, (response) => {
   cookie_info.authorization = `enctoken ${enctoken}`;
   
   if (user_id && enctoken && ticker == null) {
-    ticker = new KiteTicker({
-      api_key: "your_api_key",
-      url: "wss://ws.zerodha.com/?api_key=kitefront&user_id=" + user_id + "&enctoken=" + encodeURIComponent(enctoken)
-    });
-    //ticker = new MockTicker({})
+    if(ENV == 'prod') {
+      console.log("Connecting to Kite Ticker");
+      ticker = new KiteTicker({
+        api_key: "your_api_key",
+        url: "wss://ws.zerodha.com/?api_key=kitefront&user_id=" + user_id + "&enctoken=" + encodeURIComponent(enctoken)
+      });
+    } else {
+      console.log("Connecting to Mock Ticker");
+      ticker = new MockTicker({})
+    }
   }
   //console.log(cookie_info);
   return true;
