@@ -7,7 +7,7 @@ Your browser and your machine will act as server and monitor the price.
 Any issues in the plugin, reach out via [Telegram](https://t.me/BredgeTrade)
 
 ## How to set up (One time Process)?
-1. Open the link to download [TradeWithBredge-v1.zip](https://drive.google.com/drive/folders/1lQ01Zci95yOA3qOyDgdL0prwq-Ti1tVC?usp=sharing) file
+1. Open the link to download [TradeWithBredge-v1.zip](https://drive.google.com/file/d/13dM9l85VdlWOAyDu-oMjlJd8crnsWmWA/view?usp=sharing) file
 2. Click on the download button
 3. ![image](https://github.com/user-attachments/assets/61333038-e20e-4de0-9f59-848e26df8a6e)
 4. Create folder called TradeWithBredge-plugin 
