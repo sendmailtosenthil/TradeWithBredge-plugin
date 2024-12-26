@@ -3,13 +3,11 @@
 Bredge team has created open source plugin that reads zerodha cookie and watch for the calendar spread price difference. When the price reached, it will play the sound for making order.
 Your browser and your machine will act as server and monitor the price.
 
-## Important Point
-The 3rd ask price and bid price's depth is considered. This will make sure that we get without mush slippage.
-![image](https://github.com/user-attachments/assets/8983fe57-68ed-4dee-99e2-a7dd9fd542ab)
-
+## Issues
+Any issues in the plugin, reach out via [Telegram](https://t.me/BredgeTrade)
 
 ## How to set up (One time Process)?
-1. Open the link to download [zerodha-price-monitor.zip](https://github.com/sendmailtosenthil/TradeWithBredge-plugin/blob/main/zerodha-price-monitor.zip) file
+1. Open the link to download [TradeWithBredge-v1.zip](https://drive.google.com/drive/folders/1lQ01Zci95yOA3qOyDgdL0prwq-Ti1tVC?usp=sharing) file
 2. Click on the download button
 3. ![image](https://github.com/user-attachments/assets/61333038-e20e-4de0-9f59-848e26df8a6e)
 4. Create folder called TradeWithBredge-plugin 
@@ -49,10 +47,11 @@ The 3rd ask price and bid price's depth is considered. This will make sure that 
 15. After click of Alert me, the text below 'Yet to Connect' will show the difference and threshold waiting for.
 16. When price difference reached, you will hear the notification sound.
 
+## Release Notes
+### Version 1.0
+1. Support for Calendar Spread with dynamic depth level to reduce slippages
 
-
-
-
-
-
-
+## Next Release Features
+1. Support for placing orders automatically
+2. Support for custom quantity for Buy and Sell Leg
+3. Support for Other Brokers like Angel Broking, Upstox, etc.
