@@ -1,0 +1,108 @@
+<html>
+<head>
+  <title>Angel Ticker</title>
+  <style>
+    .chart-container {
+      width: 800px;
+      height: 400px;
+      margin: 20px;
+    }
+    .line {
+      fill: none;
+      stroke: #2196F3;
+      stroke-width: 2px;
+    }
+    .axis {
+      font-size: 12px;
+    }
+    .form-container {
+      margin: 20px;
+      padding: 15px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: inline-block;
+      width: 150px;
+      margin-right: 10px;
+    }
+    input {
+      padding: 5px;
+      width: 200px;
+    }
+    .button-group {
+      margin-top: 15px;
+    }
+    button {
+      padding: 8px 15px;
+      margin-right: 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="form-container">
+    <div class="form-group">
+      <label for="baseInstrument">Base Instrument:</label>
+      <select id="baseInstrument" style="padding: 5px; width: 200px;">
+        <option value="">Select</option>
+        <option value="NIFTY">NIFTY</option>
+        <option value="BANKNIFTY">BANKNIFTY</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="buyExpiry">Buy Expiry:</label>
+      <select id="buyExpiry" style="padding: 5px; width: 200px;">
+        <option value="">Select</option>
+      </select>
+    </div>
+    
+    <div class="form-group">
+      <label for="sellExpiry">Sell Expiry:</label>
+      <select id="sellExpiry" style="padding: 5px; width: 200px;">
+        <option value="">Select</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="buyStrike">Buy Leg Script:</label>
+      <input type="text" id="buyStrike" placeholder="Enter buy strike with CE or PE (23000PE)" value="23800PE">
+    </div>
+    <div class="form-group">
+      <label for="sellStrike">Sell Leg Script:</label>
+      <input type="text" id="sellStrike" placeholder="Enter sell strike with CE or PE (23000PE)" value="23800PE">
+    </div>
+    <div class="form-group">
+      <label for="quantity">Quantity:</label>
+      <input type="number" id="quantity" placeholder="Enter quantity" value="75">
+    </div>
+    <div class="form-group">
+      <label for="depth">Depth:</label>
+      <input type="number" id="depth" step="1" placeholder="Depth between 1 to 5" value="2">
+    </div>
+    <div class="form-group">
+      <label for="priceDiff">Price Difference:</label>
+      <input type="number" id="priceDiff" step="0.5" placeholder="Enter price difference" value="0.7">
+    </div>
+    <div class="button-group">
+      <button id="myButton">Alert Me</button>
+    </div>
+  </div>
+  <audio id="alertSound" src="alert.mp3" preload="auto"></audio>
+  <div id="status">Yet to Connect</div>
+  <div id="chart" class="chart-container"></div>
+  <script src="config.js"></script>
+  <script src="scriptDownloader.js"></script>
+  <script src="otpauth.umd.min.js"></script>
+  <script src="axios.min.js"></script>
+  <script src="totp.js"></script>
+  <script src="angel_constants.js"></script>
+  <script src="angel_api.js"></script>
+  <script src="custom_binary_parser.js"></script>
+  <script src="angel_connect.js"></script>
+  <script src="angel_ticker.js"></script>
+  <script src="angelPage.js"></script>
+</body>
+</html>

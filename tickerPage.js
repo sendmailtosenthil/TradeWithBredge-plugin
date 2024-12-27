@@ -102,8 +102,8 @@ document.getElementById('myButton').addEventListener('click', function() {
           // console.log("Buy Depth", buyDepth);
           // console.log("Sel Depth", sellDepth);
           // Get the third element price for buy and sell
-          const buyPrice = buyDepth[depth-1]?.price || 0;
-          const sellPrice = sellDepth[depth-1]?.price || 0;
+          const buyPrice = sellDepth[depth-1]?.price || 0;
+          const sellPrice = buyDepth[depth-1]?.price || 0;
 
           // Update cache based on instrument token
           //console.log("Instrument Token", instrumentToken, tokens[0], tokens[1]);
@@ -139,29 +139,6 @@ document.getElementById('myButton').addEventListener('click', function() {
 
 });
 
-chrome.runtime.sendMessage({action: 'getCookies'}, (response) => {
-  const {user_id, enctoken} = response;
-  
-  cookie_info.user_id = user_id;
-  cookie_info.enctoken = enctoken
-  cookie_info.authorization = `enctoken ${enctoken}`;
-  
-  if (user_id && enctoken && ticker == null) {
-    loadUser();
-    if(ENV == 'prod') {
-      console.log("Connecting to Kite Ticker");
-      ticker = new KiteTicker({
-        api_key: "your_api_key",
-        url: "wss://ws.zerodha.com/?api_key=kitefront&user_id=" + user_id + "&enctoken=" + encodeURIComponent(enctoken)
-      });
-    } else {
-      console.log("Connecting to Mock Ticker");
-      ticker = new MockTicker({})
-    }
-  }
-  //console.log(cookie_info);
-  return true;
-});
 
 class MockTicker {
   constructor(params) {
@@ -238,5 +215,3 @@ class MockTicker {
     }
   }
 }
-
-
