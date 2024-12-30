@@ -54,11 +54,13 @@ You can view the **video** [here](https://youtu.be/_UDUnPlqyCI)
 ## How to use the plugin for your price monitoring **AngelOne**?
 1. Click on the plugin, will show a button "Open AngelOne", click on it will open new window
  ![image](https://github.com/user-attachments/assets/aad42567-f309-4b4a-a028-c6b671f10818)
-2. Provide your information like Angel one username, mpin (Not the password), API key and TOTP secret key.
+2. You can click on AngelOne apps ([Link](https://smartapi.angelbroking.com/signin#)) link to generate API key. Login to Angel One, click on My Profile -> My APIs -> Create App button -> After fill in details as below, click on Create App -> U can see the API key.
+![image](https://github.com/user-attachments/assets/a44c141f-4bea-48a9-8f9e-def84641c9ac)
+3. Provide your information like Angel one username, mpin (Not the password), API key and TOTP secret key.
 ![image](https://github.com/user-attachments/assets/b2462268-b9b7-4729-9c5b-556e0ab131f9)
 ![image](https://github.com/user-attachments/assets/0d4b82fb-1979-44ea-a122-fa17b6b3b880)
-3. Click on Connect button
-4. When the things are correct, it will show below message with your id 
+5. Click on Connect button
+6. When the things are correct, it will show below message with your id 
 
 
 ## Release Notes
