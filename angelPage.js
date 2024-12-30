@@ -1,5 +1,3 @@
-let credentials = {}
-
 const cache = {
     buy: null,
     sell: null
@@ -10,144 +8,17 @@ let previousTokens = []
 
 let smart_api = null
 
-let totp 
-
-function getAngelCredentials() {
-    ANGEL_USERNAME = localStorage.getItem('ANGEL_USERNAME');
-    ANGEL_PASSWORD = localStorage.getItem('ANGEL_PASSWORD');
-    ANGEL_API_KEY = localStorage.getItem('ANGEL_API_KEY');
-    ANGEL_TOTP_SECRET = localStorage.getItem('ANGEL_TOTP_SECRET');
-    const calendarForm = document.getElementById('calendar-form');
-
-    if (!ANGEL_USERNAME || !ANGEL_PASSWORD || !ANGEL_API_KEY || !ANGEL_TOTP_SECRET) {
-        calendarForm.style.display = 'none';
-        document.getElementById('status').innerHTML = `
-            <div id="connect-form">
-                <input type="text" id="username" placeholder="Angel Username" />
-                <input type="password" id="password" placeholder="Angel Password" />
-                <input type="password" id="apiKey" placeholder="Angel API Key" />
-                <input type="password" id="totpSecret" placeholder="TOTP KEY" />
-                <button id="connect">Connect</button>
-            </div>
-        `;
-        document.getElementById('connect').addEventListener('click', saveCredentials)
-    } else {
-        calendarForm.style.display = 'block';
-        const existingForm = document.getElementById('credentials-form');
-        totp = new OTPAuth.TOTP({
-            issuer: "ACME",
-            label: "AngelOne",
-            algorithm: "SHA1",
-            digits: 6,
-            period: 30,
-            secret: ANGEL_TOTP_SECRET,
-          });
-        loadUser()
-        if (existingForm) {
-            existingForm.remove();
-        }
-    }
-
-    return {
-        ANGEL_USERNAME,
-        ANGEL_PASSWORD,
-        ANGEL_API_KEY,
-        ANGEL_TOTP_SECRET
-    };
-}
-
-function saveCredentials() {
-    ANGEL_USERNAME = document.getElementById('username').value;
-    ANGEL_PASSWORD = document.getElementById('password').value;
-    ANGEL_API_KEY = document.getElementById('apiKey').value;
-    ANGEL_TOTP_SECRET = document.getElementById('totpSecret').value;
-
-    localStorage.setItem('ANGEL_USERNAME', ANGEL_USERNAME);
-    localStorage.setItem('ANGEL_PASSWORD', ANGEL_PASSWORD);
-    localStorage.setItem('ANGEL_API_KEY', ANGEL_API_KEY);
-    localStorage.setItem('ANGEL_TOTP_SECRET', ANGEL_TOTP_SECRET);
-
-    totp = new OTPAuth.TOTP({
-        issuer: "ACME",
-        label: "AngelOne",
-        algorithm: "SHA1",
-        digits: 6,
-        period: 30,
-        secret: ANGEL_TOTP_SECRET,
-      });
-    //document.getElementById('status').textContent = 'Credentials saved successfully';
-    loadUser();
-}
-
-function showCalendar(data){
-    const calendarForm = document.getElementById('calendar-form');
+function initTicker(event){
+    let credentials = event.detail.credentials
+    ticker = new WebSocketV2({
+        clientcode: credentials.ANGEL_USERNAME,
+        jwttoken: credentials.jwtToken,
+        apikey: credentials.ANGEL_API_KEY,
+        feedtype: credentials.feedToken
+    });
+    const calendarForm = document.getElementById('calendar-form')
     calendarForm.style.display = 'block';
-    document.getElementById('status').textContent = 'Logged in as :' + data.data.clientcode;
-}
-function loadUser() {
-    const today = new Date();
-    const todayEightAM = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 8, 0, 0);
-    let credentials = localStorage.getItem('angelCredentials');
-    let lastTokenTime = localStorage.getItem('lastTokenTime');
-
-    if (credentials && lastTokenTime && new Date(lastTokenTime) > todayEightAM && Object.keys(JSON.parse(credentials)).length > 0) {
-        // Use existing credentials if they were generated after 8 AM today
-        credentials = JSON.parse(credentials);
-        ticker = new WebSocketV2({
-            clientcode: ANGEL_USERNAME,
-            jwttoken: credentials.jwtToken,
-            apikey: ANGEL_API_KEY,
-            feedtype: credentials.feedToken
-        });
-        console.log("Using toekns from cache - Angel")
-        smart_api = new SmartApi({
-            api_key: ANGEL_API_KEY,
-            refresh_token: credentials.refreshToken,
-            client_code: ANGEL_USERNAME,
-            //totp: totp.generate(),
-            access_token: credentials.jwtToken,
-        });
-        smart_api.getProfile()
-            .then((data) => {
-                //console.log(data);
-                showCalendar(data)
-            })
-            .catch((ex) => {
-                document.getElementById('status').textContent = 'Reach to Telegram User @TradeWithBredge Error : ' + ex;
-            });
-    } else {
-        console.log("New token - Angel")
-        // Generate new session if no credentials or generated before 8 AM
-        let totp_code = totp.generate();
-        console.log(ANGEL_USERNAME, ANGEL_API_KEY, totp_code)
-        smart_api = new SmartApi({
-            api_key: ANGEL_API_KEY
-        });
-        smart_api
-            .generateSession(ANGEL_USERNAME, ANGEL_PASSWORD, totp_code)
-            .then((data) => {
-                credentials = {...data.data};
-                // Store credentials and timestamp
-                localStorage.setItem('angelCredentials', JSON.stringify(credentials));
-                localStorage.setItem('lastTokenTime', new Date().toISOString());
-                
-                ticker = new WebSocketV2({
-                    clientcode: ANGEL_USERNAME,
-                    jwttoken: credentials.jwtToken,
-                    apikey: ANGEL_API_KEY,
-                    feedtype: credentials.feedToken
-                });
-                return smart_api.getProfile();
-            })
-            .then((data) => {
-                console.log(data)
-                showCalendar(data)
-            })
-            .catch((ex) => {
-                console.log(ex);
-                document.getElementById('status').textContent = 'Reach to Telegram User @TradeWithBredge Error : ' + ex;
-            });
-    }
+    document.getElementById('status').textContent = 'Logged in as :' + credentials.ANGEL_USERNAME;
 }
 
 function getTokenFromSymbol(baseInstrument, expiry, script) {
@@ -191,7 +62,7 @@ document.getElementById('baseInstrument').addEventListener('change', function() 
     });
 });
   
-document.addEventListener('DOMContentLoaded', getAngelCredentials)
+document.addEventListener('login-success', initTicker);
 
 document.getElementById('myButton').addEventListener('click', function() {
     threshold = parseFloat(document.getElementById('priceDiff').value);
@@ -293,7 +164,13 @@ document.getElementById('myButton').addEventListener('click', function() {
                 // Alert if the difference is less than the threshold
                 if (difference.toFixed(2) <= Number(threshold).toFixed(2)) {
                     console.log("Difference is less than threshold & unsubscribed tokens");
-                    ticker.unsubscribe(tokens);
+                    ticker.fetchData({
+                        "correlationID": "Plug1", 
+                        "action":ACTION.Unsubscribe, 
+                        "mode": MODE.SnapQuote, 
+                        "exchangeType": EXCHANGES.nse_fo, 
+                        "tokens": previousTokens
+                      })
                     tokens.pop()
                     tokens.pop()
                     tokens.shift();

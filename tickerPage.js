@@ -56,7 +56,7 @@ document.getElementById('myButton').addEventListener('click', function() {
   
   
   const tokens = [Number(buyToken), Number(sellToken)];
-  if(!ticker.isAlreadyConnected()){
+  if(ticker == null || !ticker.isAlreadyConnected()){
     ticker.connect();
   } else {
     connected();
@@ -139,6 +139,29 @@ document.getElementById('myButton').addEventListener('click', function() {
 
 });
 
+chrome.runtime.sendMessage({action: 'getCookies'}, (response) => {
+  const {user_id, enctoken} = response;
+  
+  cookie_info.user_id = user_id;
+  cookie_info.enctoken = enctoken
+  cookie_info.authorization = `enctoken ${enctoken}`;
+  
+  if (user_id && enctoken && ticker == null) {
+    loadUser();
+    if(ENV == 'prod') {
+      console.log("Connecting to Kite Ticker");
+      ticker = new KiteTicker({
+        api_key: "your_api_key",
+        url: "wss://ws.zerodha.com/?api_key=kitefront&user_id=" + user_id + "&enctoken=" + encodeURIComponent(enctoken)
+      });
+    } else {
+      console.log("Connecting to Mock Ticker");
+      ticker = new MockTicker({})
+    }
+  }
+  //console.log(cookie_info);
+  return true;
+});
 
 class MockTicker {
   constructor(params) {

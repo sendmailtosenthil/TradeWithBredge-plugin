@@ -44,7 +44,15 @@
   </style>
 </head>
 <body>
-  <div class="form-container" id="calendar-form">
+  <div id="connect-form" style="display: block;">
+    <input type="text" id="username" placeholder="Angel Username" />
+    <input type="password" id="password" placeholder="Angel Password" />
+    <input type="password" id="apiKey" placeholder="Angel API Key" />
+    <input type="password" id="totpSecret" placeholder="TOTP KEY" />
+    <input type="hidden" id="attempt" value="1" />
+    <button id="connect">Connect</button>
+  </div>
+  <div class="form-container" id="calendar-form" style="display: none;">
     <div class="form-group">
       <label for="baseInstrument">Base Instrument:</label>
       <select id="baseInstrument" style="padding: 5px; width: 200px;">
@@ -102,6 +110,7 @@
   <script src="custom_binary_parser.js"></script>
   <script src="angel_connect.js"></script>
   <script src="angel_ticker.js"></script>
+  <script src="loginAngel.js"></script>
   <script src="angelPage.js"></script>
 </body>
 </html>
