@@ -10,6 +10,8 @@ let previousTokens = []
 
 let smart_api = null
 
+let totp 
+
 function getAngelCredentials() {
     ANGEL_USERNAME = localStorage.getItem('ANGEL_USERNAME');
     ANGEL_PASSWORD = localStorage.getItem('ANGEL_PASSWORD');
@@ -23,8 +25,8 @@ function getAngelCredentials() {
             <div id="connect-form">
                 <input type="text" id="username" placeholder="Angel Username" />
                 <input type="password" id="password" placeholder="Angel Password" />
-                <input type="text" id="apiKey" placeholder="Angel API Key" />
-                <input type="text" id="totpSecret" placeholder="TOTP KEY" />
+                <input type="password" id="apiKey" placeholder="Angel API Key" />
+                <input type="password" id="totpSecret" placeholder="TOTP KEY" />
                 <button id="connect">Connect</button>
             </div>
         `;
@@ -32,6 +34,14 @@ function getAngelCredentials() {
     } else {
         calendarForm.style.display = 'block';
         const existingForm = document.getElementById('credentials-form');
+        totp = new OTPAuth.TOTP({
+            issuer: "ACME",
+            label: "AngelOne",
+            algorithm: "SHA1",
+            digits: 6,
+            period: 30,
+            secret: ANGEL_TOTP_SECRET,
+          });
         loadUser()
         if (existingForm) {
             existingForm.remove();
@@ -57,6 +67,14 @@ function saveCredentials() {
     localStorage.setItem('ANGEL_API_KEY', ANGEL_API_KEY);
     localStorage.setItem('ANGEL_TOTP_SECRET', ANGEL_TOTP_SECRET);
 
+    totp = new OTPAuth.TOTP({
+        issuer: "ACME",
+        label: "AngelOne",
+        algorithm: "SHA1",
+        digits: 6,
+        period: 30,
+        secret: ANGEL_TOTP_SECRET,
+      });
     //document.getElementById('status').textContent = 'Credentials saved successfully';
     loadUser();
 }
@@ -69,19 +87,19 @@ function showCalendar(data){
 function loadUser() {
     const today = new Date();
     const todayEightAM = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 8, 0, 0);
-    const savedCredentials = localStorage.getItem('angelCredentials');
-    const lastTokenTime = localStorage.getItem('lastTokenTime');
+    let credentials = localStorage.getItem('angelCredentials');
+    let lastTokenTime = localStorage.getItem('lastTokenTime');
 
-    if (savedCredentials && lastTokenTime && new Date(lastTokenTime) > todayEightAM) {
+    if (credentials && lastTokenTime && new Date(lastTokenTime) > todayEightAM && Object.keys(JSON.parse(credentials)).length > 0) {
         // Use existing credentials if they were generated after 8 AM today
-        credentials = JSON.parse(savedCredentials);
+        credentials = JSON.parse(credentials);
         ticker = new WebSocketV2({
             clientcode: ANGEL_USERNAME,
             jwttoken: credentials.jwtToken,
             apikey: ANGEL_API_KEY,
             feedtype: credentials.feedToken
         });
-        //console.log(credentials)
+        console.log("Using toekns from cache - Angel")
         smart_api = new SmartApi({
             api_key: ANGEL_API_KEY,
             refresh_token: credentials.refreshToken,
@@ -98,8 +116,10 @@ function loadUser() {
                 document.getElementById('status').textContent = 'Reach to Telegram User @TradeWithBredge Error : ' + ex;
             });
     } else {
+        console.log("New token - Angel")
         // Generate new session if no credentials or generated before 8 AM
         let totp_code = totp.generate();
+        console.log(ANGEL_USERNAME, ANGEL_API_KEY, totp_code)
         smart_api = new SmartApi({
             api_key: ANGEL_API_KEY
         });
@@ -120,6 +140,7 @@ function loadUser() {
                 return smart_api.getProfile();
             })
             .then((data) => {
+                console.log(data)
                 showCalendar(data)
             })
             .catch((ex) => {
