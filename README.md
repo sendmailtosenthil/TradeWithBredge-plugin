@@ -4,10 +4,13 @@ Bredge team has created open source plugin that reads zerodha cookie and watch f
 Your browser and your machine will act as server and monitor the price.
 
 ## Issues
-Any issues in the plugin, reach out via [Telegram](https://t.me/BredgeTrade)
+Any issues in the plugin, reach out via [Telegram](https://t.me/TradeWithBredge)
 
 ## How to set up (One time Process)?
-You can view the video [here](https://youtu.be/_UDUnPlqyCI)
+# Video for set up
+You can view the **video** [here](https://youtu.be/_UDUnPlqyCI)
+
+# Text Instruction to set up
 1. Open the link to download [TradeWithBredge-v1.zip](https://drive.google.com/file/d/13dM9l85VdlWOAyDu-oMjlJd8crnsWmWA/view?usp=sharing) file
 2. Click on the download button
 3. ![image](https://github.com/user-attachments/assets/61333038-e20e-4de0-9f59-848e26df8a6e)
@@ -30,7 +33,7 @@ You can view the video [here](https://youtu.be/_UDUnPlqyCI)
 20. Should be able to see C icon on the toolbar. Once you see it, your set up is completed
 21. ![image](https://github.com/user-attachments/assets/7ad67a31-a451-4df1-9b39-81a946d82728)
 
-## How to use the plugin for your price monitoring?
+## How to use the plugin for your price monitoring **Zerodha**?
 1. Login to Zerodha and go to dashboard page.
 2. Click on the plugin, will show a button open zerodha, click on it will open new window
 3. ![image](https://github.com/user-attachments/assets/f2b2c1ea-b499-4589-86b7-0193f7ec1bfd)
@@ -47,6 +50,16 @@ You can view the video [here](https://youtu.be/_UDUnPlqyCI)
 14. Enter the difference between the legs & click on Alert Me button.
 15. After click of Alert me, the text below 'Yet to Connect' will show the difference and threshold waiting for.
 16. When price difference reached, you will hear the notification sound.
+
+## How to use the plugin for your price monitoring **AngelOne**?
+1. Click on the plugin, will show a button "Open AngelOne", click on it will open new window
+2. ![image](https://github.com/user-attachments/assets/aad42567-f309-4b4a-a028-c6b671f10818)
+3. Provide your information like Angel one username, mpin (Not the password), API key and TOTP secret key.
+4. ![image](https://github.com/user-attachments/assets/b2462268-b9b7-4729-9c5b-556e0ab131f9)
+5. ![image](https://github.com/user-attachments/assets/0d4b82fb-1979-44ea-a122-fa17b6b3b880)
+6. Click on Connect button
+7. 
+
 
 ## Release Notes
 ### Version 1.0
