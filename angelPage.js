@@ -10,6 +10,62 @@ let previousTokens = []
 
 let smart_api = null
 
+function getAngelCredentials() {
+    ANGEL_USERNAME = localStorage.getItem('ANGEL_USERNAME');
+    ANGEL_PASSWORD = localStorage.getItem('ANGEL_PASSWORD');
+    ANGEL_API_KEY = localStorage.getItem('ANGEL_API_KEY');
+    ANGEL_TOTP_SECRET = localStorage.getItem('ANGEL_TOTP_SECRET');
+    const calendarForm = document.getElementById('calendar-form');
+
+    if (!ANGEL_USERNAME || !ANGEL_PASSWORD || !ANGEL_API_KEY || !ANGEL_TOTP_SECRET) {
+        calendarForm.style.display = 'none';
+        document.getElementById('status').innerHTML = `
+            <div id="connect-form">
+                <input type="text" id="username" placeholder="Angel Username" />
+                <input type="password" id="password" placeholder="Angel Password" />
+                <input type="text" id="apiKey" placeholder="Angel API Key" />
+                <input type="text" id="totpSecret" placeholder="TOTP KEY" />
+                <button id="connect">Connect</button>
+            </div>
+        `;
+        document.getElementById('connect').addEventListener('click', saveCredentials)
+    } else {
+        calendarForm.style.display = 'block';
+        const existingForm = document.getElementById('credentials-form');
+        loadUser()
+        if (existingForm) {
+            existingForm.remove();
+        }
+    }
+
+    return {
+        ANGEL_USERNAME,
+        ANGEL_PASSWORD,
+        ANGEL_API_KEY,
+        ANGEL_TOTP_SECRET
+    };
+}
+
+function saveCredentials() {
+    ANGEL_USERNAME = document.getElementById('username').value;
+    ANGEL_PASSWORD = document.getElementById('password').value;
+    ANGEL_API_KEY = document.getElementById('apiKey').value;
+    ANGEL_TOTP_SECRET = document.getElementById('totpSecret').value;
+
+    localStorage.setItem('ANGEL_USERNAME', ANGEL_USERNAME);
+    localStorage.setItem('ANGEL_PASSWORD', ANGEL_PASSWORD);
+    localStorage.setItem('ANGEL_API_KEY', ANGEL_API_KEY);
+    localStorage.setItem('ANGEL_TOTP_SECRET', ANGEL_TOTP_SECRET);
+
+    //document.getElementById('status').textContent = 'Credentials saved successfully';
+    loadUser();
+}
+
+function showCalendar(data){
+    const calendarForm = document.getElementById('calendar-form');
+    calendarForm.style.display = 'block';
+    document.getElementById('status').textContent = 'Logged in as :' + data.data.clientcode;
+}
 function loadUser() {
     const today = new Date();
     const todayEightAM = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 8, 0, 0);
@@ -36,7 +92,7 @@ function loadUser() {
         smart_api.getProfile()
             .then((data) => {
                 //console.log(data);
-                document.getElementById('status').textContent = 'Logged in as :' + data.data.clientcode;
+                showCalendar(data)
             })
             .catch((ex) => {
                 document.getElementById('status').textContent = 'Reach to Telegram User @TradeWithBredge Error : ' + ex;
@@ -64,7 +120,7 @@ function loadUser() {
                 return smart_api.getProfile();
             })
             .then((data) => {
-                document.getElementById('status').textContent = 'Logged in as :' + data.data.clientcode;
+                showCalendar(data)
             })
             .catch((ex) => {
                 console.log(ex);
@@ -114,7 +170,7 @@ document.getElementById('baseInstrument').addEventListener('change', function() 
     });
 });
   
-document.addEventListener('DOMContentLoaded', loadUser)
+document.addEventListener('DOMContentLoaded', getAngelCredentials)
 
 document.getElementById('myButton').addEventListener('click', function() {
     threshold = parseFloat(document.getElementById('priceDiff').value);

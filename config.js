@@ -1,6 +1,6 @@
 var exports = exports || {};
 const ENV = 'prod'  
-const ANGEL_TOTP_SECRET = ""
-const ANGEL_USERNAME = ""
-const ANGEL_PASSWORD = ""
-const ANGEL_API_KEY = ""
+let ANGEL_TOTP_SECRET
+let ANGEL_USERNAME
+let ANGEL_PASSWORD
+let ANGEL_API_KEY
