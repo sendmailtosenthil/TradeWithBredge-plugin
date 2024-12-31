@@ -155,7 +155,10 @@ function getTokenFromSymbol(baseInstrument, expiry, script) {
 function tickerConnect(subscribe, tokens, rowId){
     if(!ticker.isAlreadyConnected()){
         ticker.connect().then(data=>{
-          subscribe(tokens, rowId)
+            Object.keys(cache).forEach(key => {
+                subscribe([Number(cache[key].buyToken), Number(cache[key].sellToken)], key)
+            })
+          //subscribe(tokens, rowId)
         }).catch(err1 => console.log("err1 :", err1));
     } else {
       subscribe(tokens, rowId);
