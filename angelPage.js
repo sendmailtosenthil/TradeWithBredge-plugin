@@ -6,6 +6,64 @@ const tokenPriceCache = {
 
 } 
 let smart_api = null
+let rowNumber = 1;
+
+function monitorRow(row){
+    cache[row.rowId] = {
+        buyToken: row.buyToken,
+        sellToken: row.sellToken,
+        depth: row.depth,
+        threshold: row.threshold
+    }
+    tickerConnect(subscribe, [row.buyToken, row.sellToken], row.rowId)
+}
+
+function addNewRow() {
+    const buyScript = document.getElementById('buyScript').value;
+    const sellScript = document.getElementById('sellScript').value;
+    const depth = document.getElementById('depth').value;
+    const threshold = document.getElementById('threshold').value;
+    const baseInstrument = document.getElementById('baseInstrument').value;
+    let buyExpiry = document.getElementById(`buyExpiry`).value;
+    buyExpiry = buyExpiry.substring(0, 5) + buyExpiry.substring(7)
+    let sellExpiry = document.getElementById(`sellExpiry`).value;
+    sellExpiry = sellExpiry.substring(0, 5) + sellExpiry.substring(7)
+    
+    const tbody = document.getElementById('alertsTableBody');
+    const row = tbody.insertRow();
+    row.id = 'row-' + rowNumber;
+    
+    const cells = [
+      {value: `${baseInstrument}${buyExpiry}${buyScript}`},
+      {value: `${baseInstrument}${sellExpiry}${sellScript}`},
+      {value: depth},
+      {value: threshold},
+      {value: '0'},
+      {value: '0'},
+      {value: '0'},
+      {value: 'Yet to Start'},
+    ];
+
+    cells.forEach(({value}) => {
+      const cell = row.insertCell();
+      cell.textContent = value;
+    });
+
+    // Clear form inputs
+    document.getElementById('buyScript').value = '';
+    document.getElementById('sellScript').value = '';
+    document.getElementById('depth').value = '2';
+    document.getElementById('threshold').value = '';
+    
+    rowNumber++;
+    monitorRow({
+        buyToken: getTokenFromSymbol(baseInstrument, buyExpiry, buyScript),
+        sellToken: getTokenFromSymbol(baseInstrument, sellExpiry, sellScript),
+        depth: depth,
+        threshold: Number(Number(threshold).toFixed(2)),
+        rowId: row.id
+    })
+}
 
 function initTicker(event){
     let credentials = event.detail.credentials
@@ -19,24 +77,30 @@ function initTicker(event){
     ticker.on("error", function(e) {
       console.log("Error", e);
     });
-    const calendarForm = document.getElementById('calendar-form')
-    calendarForm.style.display = 'block';
+    document.getElementById('addFormButton').addEventListener('click', addNewRow);
+    // const calendarForm = document.getElementById('calendar-form')
+    document.getElementById('monitoring-form').style.display = 'block';
+    document.getElementById('alertsTable').style.display = 'block';
+    document.getElementById('status').style.display = 'block';
     document.getElementById('status').textContent = 'Logged in as :' + credentials.ANGEL_USERNAME;
 }
 
 function isThresholdCrossed() {
     const toBeDeletedKeys = []
     //console.log(cache.legs)
-    Object.keys(cache.legs).forEach(key => {
-        const leg = cache.legs[key]
-        const buyPrice = tokenPriceCache[leg.buyToken]?.sellPrice[leg.depth-1]?.price || 0;
-        const sellPrice = tokenPriceCache[leg.sellToken]?.buyPrice[leg.depth-1]?.price || 0;
-        const prices = "Based on depth, Buy Price :"+buyPrice + " Sell Price :" + sellPrice
+    Object.keys(cache).forEach(key => {
+        const leg = cache[key]
+        //console.log("Leg ", leg, "tokenPriceCache ",tokenPriceCache)
+        const buyPrice = tokenPriceCache[leg.buyToken]?.sellPrices[leg.depth-1]?.price || 0;
+        const sellPrice = tokenPriceCache[leg.sellToken]?.buyPrices[leg.depth-1]?.price || 0;
         if(buyPrice > 0 && sellPrice > 0) {
+            const rowDoc = document.getElementById(key);
+            rowDoc.cells[5].textContent = buyPrice;
+            rowDoc.cells[6].textContent = sellPrice;
             const difference = Number(Math.abs(buyPrice - sellPrice).toFixed(2));
             const threshold = leg.threshold;
-            document.getElementById(`status${key}`).textContent = 'Threshold set as :' + threshold + ' Difference is :' + difference ;
-            document.getElementById(`price${key}`).textContent = prices
+            rowDoc.cells[4].textContent = difference;
+            rowDoc.cells[7].textContent = 'Running'
             if(difference.toFixed(2) <= threshold){
                 console.log("Difference is less than threshold ");
                 if(Object.keys(tokenPriceCache).length % 2 == 0) {
@@ -49,15 +113,16 @@ function isThresholdCrossed() {
                   })
                 }
                 toBeDeletedKeys.push(key)
-                const alertSound = document.getElementById(`alertSound${key}`);
+                const alertSound = document.getElementById(`alertSound`);
                 alertSound.play();
                 // Add this line to change background color
-                document.querySelector(`.leg-form:nth-child(${key})`).style.backgroundColor = '#90EE90';
+                rowDoc.cells[7].textContent = 'Completed'
+                rowDoc.style.backgroundColor = '#90EE90';
             }
         }
     })
     toBeDeletedKeys.forEach(key => {
-        delete cache.legs[key]
+        delete cache[key]
     })  
 }
 
@@ -72,119 +137,61 @@ function handleTicks(tick) {
     const instrumentToken = Number(tick.token);
     if(tick?.best_5_buy_data?.length > 0){
         tokenPriceCache[instrumentToken] = {
-          buyPrice: tick.best_5_buy_data,
-          sellPrice: tick.best_5_sell_data
+          buyPrices: tick.best_5_buy_data,
+          sellPrices: tick.best_5_sell_data
         }
         isThresholdCrossed()
     }
 }
 
 function getTokenFromSymbol(baseInstrument, expiry, script) {
-    expiry = expiry.substring(0, 5) + expiry.substring(7)
+    //expiry = expiry.substring(0, 5) + expiry.substring(7)
     const symbolKey = `${baseInstrument}${expiry}${script}`;
     return baseInstrument === 'NIFTY' 
         ? Number(niftySymbols[symbolKey]) 
         : Number(bankniftySymbols[symbolKey]);
 }
 
-function tickerConnect(subscribe, leg, legId){
+function tickerConnect(subscribe, tokens, rowId){
     if(!ticker.isAlreadyConnected()){
         ticker.connect().then(data=>{
-          subscribe(leg, legId)
+          subscribe(tokens, rowId)
         }).catch(err1 => console.log("err1 :", err1));
     } else {
-      subscribe(leg, legId);
+      subscribe(tokens, rowId);
     }
 }
 
-function subscribe(leg, legId){
-    if(leg.previousTokens.length > 0){
-      console.log("Unsubscribing :", leg.previousTokens);
-      ticker.fetchData({
-          "correlationID": `Plug${legId}`, 
-          "action":ACTION.Unsubscribe, 
-          "mode": MODE.SnapQuote, 
-          "exchangeType": EXCHANGES.nse_fo, 
-          "tokens": leg.previousTokens
-        })
-    }
-    let tokens = [leg.buyToken, leg.sellToken];
-    console.log("Connected :", tokens.length);
+function subscribe(tokens, rowId){
+    //console.log("Connected :", tokens.length);
     if(tokens.length == 2) {
       ticker.fetchData({
-          "correlationID": `Plug${legId}`, 
+          "correlationID": `Plug${rowId}`, 
           "action":ACTION.Subscribe, 
           "mode": MODE.SnapQuote, 
           "exchangeType": EXCHANGES.nse_fo, 
           "tokens": tokens
         })
       console.log("Subscribed: ",tokens)
-      leg.previousTokens = tokens;
     }
-}
-
-function onAlertButtonClick(n){
-    
-    // Initialize cache for this leg if it doesn't exist
-    if (!cache.legs[n]) {
-        cache.legs[n] = {
-            lastBuyPrice: null,
-            lastSellPrice: null,
-            threshold: null,
-            depth: null,
-            buyToken: null,
-            sellToken: null,
-            previousTokens: []
-        };
-    }
-
-    const baseInstrument = document.getElementById('baseInstrument').value;
-    const buyExpiry = document.getElementById(`buyExpiry${n}`).value;
-    const sellExpiry = document.getElementById(`sellExpiry${n}`).value;
-    const buyScript = document.getElementById(`buyStrike${n}`).value;
-    const sellScript = document.getElementById(`sellStrike${n}`).value;
-
-    cache.legs[n].threshold = Number(parseFloat(document.getElementById(`priceDiff${n}`).value).toFixed(2));
-    cache.legs[n].depth = parseInt(document.getElementById(`depth${n}`).value);
-    cache.legs[n].buyToken = getTokenFromSymbol(baseInstrument, buyExpiry, buyScript);
-    cache.legs[n].sellToken = getTokenFromSymbol(baseInstrument, sellExpiry, sellScript);
-
-    tickerConnect(subscribe, cache.legs[n], n);
 }
 
 document.getElementById('baseInstrument').addEventListener('change', function() {
-    const addLegButton = document.getElementById('addLeg');
-    const selectedInstrument = this.value;
-    
-    if (selectedInstrument) {
-        addLegButton.style.display = 'inline-block';
-    } else {
-        addLegButton.style.display = 'none';
-    }
-});
-
-document.getElementById('addLeg').addEventListener('click', function() {
-    const container = document.getElementById('legFormsContainer');
-    if (container.children.length >= 2) return;
-    
-    const template = document.getElementById('legFormTemplate');
-    const templateContent = template.innerHTML;
-    const n = container.children.length + 1;
-    
-    // Create a new div for the leg form
-    const legForm = document.createElement('div');
-    legForm.className = 'leg-form';
-    legForm.innerHTML = templateContent.replace(/{n}/g, n);
-    container.appendChild(legForm);
-    
-    // Get the newly added selects
-    const buyExpirySelect = container.querySelector(`#buyExpiry${n}`);
-    const sellExpirySelect = container.querySelector(`#sellExpiry${n}`);
-    
-    // Get expiry values based on selected instrument
-    const selectedInstrument = document.getElementById('baseInstrument').value;
+    const selectedInstrument = document.getElementById('baseInstrument').value
     const expiryValues = selectedInstrument === 'NIFTY' ? niftyExpiry : bankniftyExpiry;
-    
+    const buyExpirySelect = document.getElementById("buyExpiry")
+    const sellExpirySelect = document.getElementById("sellExpiry")
+    // Clear existing options
+    buyExpirySelect.innerHTML = '';
+    sellExpirySelect.innerHTML = '';
+
+    // Add default empty option
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = 'Select Expiry';
+    buyExpirySelect.appendChild(defaultOption.cloneNode(true));
+    sellExpirySelect.appendChild(defaultOption);
+
     // Populate both dropdowns
     expiryValues.forEach(expiry => {
         const buyOption = document.createElement('option');
@@ -197,11 +204,6 @@ document.getElementById('addLeg').addEventListener('click', function() {
         sellOption.textContent = expiry;
         sellExpirySelect.appendChild(sellOption);
     });
-
-    // Add event listener to the newly created button
-    document.getElementById(`myButton${n}`).addEventListener('click', function() {
-      onAlertButtonClick(n)
-  });
 });
-  
+
 document.addEventListener('login-success', initTicker);
