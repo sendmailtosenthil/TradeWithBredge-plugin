@@ -11,15 +11,6 @@
     .form-group {
       margin-bottom: 15px;
     }
-    label {
-      display: inline-block;
-      width: 150px;
-      margin-right: 10px;
-    }
-    input {
-      padding: 5px;
-      width: 200px;
-    }
     button {
       padding: 8px 15px;
       margin-right: 10px;
@@ -49,6 +40,28 @@
     tr:nth-child(even) {
       background-color: #f9f9f9;
     }
+    /* Update these CSS rules */
+    .form-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;  /* Reduced from 15px */
+    }
+    .form-group {
+      margin-right: 10px;  /* Reduced from 20px */
+      flex: 0.25;
+    }
+    label {
+      display: inline-block;
+      width: 120px;    /* Reduced from 150px */
+      margin-right: 5px;  /* Reduced from 10px */
+    }
+    input, select {
+      padding: 3px;    /* Reduced from 5px */
+      width: 160px !important;    /* Reduced from 200px */
+    }
+    input[type="checkbox"] {
+      width: auto !important;
+    }
   </style>
 </head>
 <body>
@@ -61,44 +74,69 @@
     <button id="connect">Connect</button>
   </div>
 
+  <!-- Update the form structure -->
   <div class="form-container" id="monitoring-form" style="display: none;">
-    <div class="form-group">
-      <label for="baseInstrument">Base Instrument:</label>
-      <select id="baseInstrument">
-        <option value="">Select</option>
-        <option value="NIFTY">NIFTY</option>
-        <option value="BANKNIFTY">BANKNIFTY</option>
-      </select>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="baseInstrument">Base Instrument:</label>
+        <select id="baseInstrument">
+          <option value="">Select</option>
+          <option value="NIFTY">NIFTY</option>
+          <option value="BANKNIFTY">BANKNIFTY</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="orderPlz">Yes, I am aware of slippage on placing order:</label>
+        <input type="checkbox" id="orderPlz">
+      </div>
     </div>
-    <div class="form-group">
-      <label for="buyExpiry">Buy Expiry:</label>
-      <select id="buyExpiry" style="padding: 5px; width: 200px;">
-        <option value="">Select</option>
-      </select>
+    
+    <div class="form-row">
+      <div class="form-group">
+        <label for="buyExpiry">Buy Expiry:</label>
+        <select id="buyExpiry" style="padding: 5px; width: 200px;">
+          <option value="">Select</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="buyScript">Buy Leg Script:</label>
+        <input type="text" id="buyScript" placeholder="Enter buy script name" value="23800PE">
+      </div>
     </div>
-    <div class="form-group">
-      <label for="buyScript">Buy Leg Script:</label>
-      <input type="text" id="buyScript" placeholder="Enter buy script name" value="23800PE">
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="sellExpiry">Sell Expiry:</label>
+        <select id="sellExpiry" style="padding: 5px; width: 200px;">
+          <option value="">Select</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="sellScript">Sell Leg Script:</label>
+        <input type="text" id="sellScript" placeholder="Enter sell script name" value="23800PE">
+      </div>
     </div>
-    <div class="form-group">
-      <label for="sellExpiry">Sell Expiry:</label>
-      <select id="sellExpiry" style="padding: 5px; width: 200px;">
-        <option value="">Select</option>
-      </select>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="depth">Depth:</label>
+        <input type="number" id="depth" step="1" placeholder="Depth between 1 to 5" value="2">
+      </div>
+      <div class="form-group">
+        <label for="threshold">Threshold:</label>
+        <input type="number" id="threshold" step="0.5" placeholder="Enter threshold" value="0.7">
+      </div>
     </div>
-    <div class="form-group">
-      <label for="sellScript">Sell Leg Script:</label>
-      <input type="text" id="sellScript" placeholder="Enter sell script name" value="23800PE">
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="quantity">Quantity:</label>
+        <input type="number" id="quantity" placeholder="Enter trading quantity" value="75">
+      </div>
+      <div class="form-group">
+        <button id="addFormButton">Add Monitoring</button>
+      </div>
     </div>
-    <div class="form-group">
-      <label for="depth">Depth:</label>
-      <input type="number" id="depth" step="1" placeholder="Depth between 1 to 5" value="2">
-    </div>
-    <div class="form-group">
-      <label for="threshold">Threshold:</label>
-      <input type="number" id="threshold" step="0.5" placeholder="Enter threshold" value="0.7">
-    </div>
-    <button id="addFormButton">Add Monitoring</button>
   </div>
   <div class="form-group">
     <div id="status" style="display: none;">Yet to Connect</div>
@@ -114,6 +152,7 @@
         <th>Best Buy Price</th>
         <th>Best Sell Price</th>
         <th>Status</th>
+        <th>Place Order</th>
       </tr>
     </thead>
     <tbody id="alertsTableBody">

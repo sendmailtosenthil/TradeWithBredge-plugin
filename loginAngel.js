@@ -1,3 +1,5 @@
+let ANGEL_ONE = null
+
 function onLoginError(ex){
     let attempt = document.getElementById('attempt').value
     if(attempt && attempt > 3){
@@ -32,12 +34,10 @@ function generateOtp(){
 function loadAngels() {
     
     if (isOneTimeSetUpDone()) {
-        if(isUserAlredyLoggedIn()){
-            console.log("User already logged in");
-            loginSuccess()
-        } else {
-            loginUser(false);
-        }
+        ANGEL_ONE = new SmartApi({
+            api_key: ANGEL_API_KEY
+        });
+        loginUser(false);
     }
 }
 
@@ -71,10 +71,7 @@ function loginUser(saveLoginDetails = false){
     // Generate new session if no credentials or generated before 8 AM
     let totp_code = generateOtp();
     //console.log(ANGEL_USERNAME, ANGEL_API_KEY, totp_code)
-    smart_api = new SmartApi({
-        api_key: ANGEL_API_KEY
-    });
-    smart_api
+    ANGEL_ONE
         .generateSession(ANGEL_USERNAME, ANGEL_PASSWORD, totp_code)
         .then((data) => {
             credentials = {...data.data};
