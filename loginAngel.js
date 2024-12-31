@@ -32,8 +32,11 @@ function generateOtp(){
 function loadAngels() {
     
     if (isOneTimeSetUpDone()) {
-        if(isUserAlredyLoggedIn){
+        if(isUserAlredyLoggedIn()){
+            console.log("User already logged in");
             loginSuccess()
+        } else {
+            loginUser(false);
         }
     }
 }

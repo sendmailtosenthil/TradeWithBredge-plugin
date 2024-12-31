@@ -41,6 +41,21 @@
       margin-right: 10px;
       cursor: pointer;
     }
+    .leg-form {
+      margin-top: 20px;
+      padding: 10px;
+      border: 1px solid #eee;
+      border-radius: 4px;
+    }
+    #legFormsContainer {
+        display: flex;
+        gap: 20px;
+    }
+    
+    .leg-form {
+        flex: 1;
+        min-width: 300px;
+    }
   </style>
 </head>
 <body>
@@ -52,53 +67,63 @@
     <input type="hidden" id="attempt" value="1" />
     <button id="connect">Connect</button>
   </div>
-  <div class="form-container" id="calendar-form" style="display: none;">
-    <div class="form-group">
-      <label for="baseInstrument">Base Instrument:</label>
-      <select id="baseInstrument" style="padding: 5px; width: 200px;">
-        <option value="">Select</option>
-        <option value="NIFTY">NIFTY</option>
-        <option value="BANKNIFTY">BANKNIFTY</option>
-      </select>
+    <div class="form-container" id="calendar-form" style="display: none;">
+      <div class="form-group">
+        <label for="baseInstrument">Base Instrument:</label>
+        <select id="baseInstrument" style="padding: 5px; width: 200px;">
+          <option value="">Select</option>
+          <option value="NIFTY">NIFTY</option>
+          <option value="BANKNIFTY">BANKNIFTY</option>
+        </select>
+        <button id="addLeg" style="display: none;">Add Leg</button>
+      </div>
+      <div id="legFormsContainer"></div>
     </div>
-    <div class="form-group">
-      <label for="buyExpiry">Buy Expiry:</label>
-      <select id="buyExpiry" style="padding: 5px; width: 200px;">
-        <option value="">Select</option>
-      </select>
+  <template id="legFormTemplate">
+    <div class="leg-form">
+      <h3>Leg {n}</h3>
+      <div class="form-group">
+        <label for="buyExpiry{n}">Buy Expiry:</label>
+        <select id="buyExpiry{n}" style="padding: 5px; width: 200px;">
+          <option value="">Select</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="sellExpiry{n}">Sell Expiry:</label>
+        <select id="sellExpiry{n}" style="padding: 5px; width: 200px;">
+          <option value="">Select</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="buyStrike{n}">Buy Leg Script:</label>
+        <input type="text" id="buyStrike{n}" placeholder="Enter buy strike with CE or PE (23000PE)" value="23800PE">
+      </div>
+      <div class="form-group">
+        <label for="sellStrike{n}">Sell Leg Script:</label>
+        <input type="text" id="sellStrike{n}" placeholder="Enter sell strike with CE or PE (23000PE)" value="23800PE">
+      </div>
+      <div class="form-group">
+        <label for="quantity{n}">Quantity:</label>
+        <input type="number" id="quantity{n}" placeholder="Enter quantity" value="75">
+      </div>
+      <div class="form-group">
+        <label for="depth{n}">Depth:</label>
+        <input type="number" id="depth{n}" step="1" placeholder="Depth between 1 to 5" value="2">
+      </div>
+      <div class="form-group">
+        <label for="priceDiff{n}">Price Difference:</label>
+        <input type="number" id="priceDiff{n}" step="0.5" placeholder="Enter price difference" value="0.7">
+      </div>
+      <div class="form-group">
+        <button id="myButton{n}">Alert Me</button>
+        <div id="status{n}">Yet to Connect</div>
+      </div>
+      <!-- <button class="removeLeg">Remove Leg</button> -->
+      <audio id="alertSound{n}" src="alert{n}.mp4" preload="auto"></audio>
     </div>
-    
-    <div class="form-group">
-      <label for="sellExpiry">Sell Expiry:</label>
-      <select id="sellExpiry" style="padding: 5px; width: 200px;">
-        <option value="">Select</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label for="buyStrike">Buy Leg Script:</label>
-      <input type="text" id="buyStrike" placeholder="Enter buy strike with CE or PE (23000PE)" value="23800PE">
-    </div>
-    <div class="form-group">
-      <label for="sellStrike">Sell Leg Script:</label>
-      <input type="text" id="sellStrike" placeholder="Enter sell strike with CE or PE (23000PE)" value="23800PE">
-    </div>
-    <div class="form-group">
-      <label for="quantity">Quantity:</label>
-      <input type="number" id="quantity" placeholder="Enter quantity" value="75">
-    </div>
-    <div class="form-group">
-      <label for="depth">Depth:</label>
-      <input type="number" id="depth" step="1" placeholder="Depth between 1 to 5" value="2">
-    </div>
-    <div class="form-group">
-      <label for="priceDiff">Price Difference:</label>
-      <input type="number" id="priceDiff" step="0.5" placeholder="Enter price difference" value="0.7">
-    </div>
-    <div class="button-group">
-      <button id="myButton">Alert Me</button>
-    </div>
-  </div>
-  <audio id="alertSound" src="alert.mp3" preload="auto"></audio>
+  </template>
+
+  <!-- <audio id="alertSound" src="alert.mp3" preload="auto"></audio> -->
   <div id="status">Yet to Connect</div>
   <div id="chart" class="chart-container"></div>
   <script src="config.js"></script>
