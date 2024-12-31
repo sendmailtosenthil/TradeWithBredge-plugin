@@ -36,8 +36,8 @@ function isThresholdCrossed() {
             const threshold = leg.threshold;
             document.getElementById(`status${key}`).textContent = 'Threshold set as :' + threshold + ' Difference is :' + difference;
             if(difference.toFixed(2) <= threshold){
-                console.log("Difference is less than threshold");
-                if(Object.keys(tokenPriceCache.keys()).length % 2 == 0) {
+                console.log("Difference is less than threshold ");
+                if(Object.keys(tokenPriceCache).length % 2 == 0) {
                   ticker.fetchData({
                       "correlationID": `Plug${key}`, 
                       "action":ACTION.Unsubscribe, 
