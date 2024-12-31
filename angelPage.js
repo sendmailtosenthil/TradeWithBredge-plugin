@@ -29,12 +29,14 @@ function isThresholdCrossed() {
     //console.log(cache.legs)
     Object.keys(cache.legs).forEach(key => {
         const leg = cache.legs[key]
-        const buyPrice = tokenPriceCache[leg.buyToken]?.buyPrice[leg.depth-1]?.price || 0;
-        const sellPrice = tokenPriceCache[leg.sellToken]?.sellPrice[leg.depth-1]?.price || 0;
+        const buyPrice = tokenPriceCache[leg.buyToken]?.sellPrice[leg.depth-1]?.price || 0;
+        const sellPrice = tokenPriceCache[leg.sellToken]?.buyPrice[leg.depth-1]?.price || 0;
+        const prices = "Based on depth, Buy Price :"+buyPrice + " Sell Price :" + sellPrice
         if(buyPrice > 0 && sellPrice > 0) {
             const difference = Number(Math.abs(buyPrice - sellPrice).toFixed(2));
             const threshold = leg.threshold;
-            document.getElementById(`status${key}`).textContent = 'Threshold set as :' + threshold + ' Difference is :' + difference;
+            document.getElementById(`status${key}`).textContent = 'Threshold set as :' + threshold + ' Difference is :' + difference ;
+            document.getElementById(`price${key}`).textContent = prices
             if(difference.toFixed(2) <= threshold){
                 console.log("Difference is less than threshold ");
                 if(Object.keys(tokenPriceCache).length % 2 == 0) {
