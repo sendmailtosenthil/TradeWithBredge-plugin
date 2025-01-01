@@ -128,31 +128,32 @@ function placeOrder(row, rowId) {
         "tradingsymbol":row.buyScript,
         "symboltoken":String(row.buyToken),
         "transactiontype":"BUY",
-        "exchange":"NSE",
+        "exchange":"NFO",
         "ordertype":"MARKET",
-        "producttype":"CNC",
+        "producttype":"CARRYFORWARD",
         "duration":"DAY",
         "quantity": String(row.quantity)
     }).then(data => {
         console.log("Buy success", data)
-        rowDoc.cells[7].textContent = 'Buy '+ (data.message.length > 0 ? data?.message :'Failed') + ' order id '+ (data?.data?.orderid ? data?.data?.orderid : 'Check your Account')
-        if(data.message.length > 0 && data.data.orderid){
-            orders.push(data.data.orderid)
+        rowDoc.cells[7].textContent = ' Buy '+ data.message + ' order id '+ data?.data?.orderid
+        if(data.data.orderid){
+            orders.push(data.data.uniqueorderid)
             ANGEL_ONE.placeOrder({
                 "variety":"NORMAL",
                 "tradingsymbol":row.sellScript,
                 "symboltoken":String(row.sellToken),
                 "transactiontype":"SELL",
-                "exchange":"NSE",
+                "exchange":"NFO",
                 "ordertype":"MARKET",
-                "producttype":"CNC",
+                "producttype":"CARRYFORWARD",
                 "duration":"DAY",
                 "quantity": String(row.quantity)
             }).then(sellData => {
                 console.log("Sell success", sellData)
-                rowDoc.cells[7].textContent = rowDoc.cells[7].textContent + ' Sell '+ sellData?.message + ' order '+ sellData?.data?.orderid
-                if(sellData.message.length > 0 && sellData.data.orderid){
-                    orders.push(sellData.data.orderid)
+                rowDoc.cells[7].textContent = rowDoc.cells[7].textContent + ' Sell '+ sellData?.message + ' order '+ sellData?.data?.orderid + ' '
+                if(sellData.data.orderid){
+                    orders.push(sellData.data.uniqueorderid)
+                    getOrderBook(orders, rowDoc)
                 } else {
                     rowDoc.style.backgroundColor = '#FFC300'
                 }
@@ -161,23 +162,36 @@ function placeOrder(row, rowId) {
                 rowDoc.cells[7].textContent = rowDoc.cells[7].textContent + ' Sell Failed '+exe
             })
         } else {
+            getOrderBook(orders, rowDoc)
             rowDoc.style.backgroundColor = '#FF7F7F'
         }
     }).catch(ex => {
         console.log("Buy Failed ", ex)
         rowDoc.cells[7].textContent = 'Buy Failed '+ ex
     })
+    
+}
+
+function getOrderBook(orders, rowDoc){
+    console.log("Given orders ", orders)
     ANGEL_ONE.getOrderBook().then(fetchedOrders => {
-        let executedOrders = orders.map(order => fetchedOrders.data.filter(o => o.orderid = order.orderid))
+        console.log("Fetched orders ", fetchedOrders)
+        let executedOrders = fetchedOrders.data.filter(o => orders.includes(o.uniqueorderid))
         if(orders.length != executedOrders.length){
             rowDoc.cells[7].textContent = rowDoc.cells[7].textContent + 'Missing orders '+ orders
+            rowDoc.style.backgroundColor = '#FF7F7F';
         }
         executedOrders.forEach(o => {
-            rowDoc.cells[7].textContent = rowDoc.cells[7].textContent +  o.transactiontype + '::'+ o.tradingsymbol + '::@' +o.price +' '
+            if(o.orderstatus == 'rejected'){
+                rowDoc.cells[7].textContent = rowDoc.cells[7].textContent + `[${o.transactiontype}]`+ o.text + ' '
+                rowDoc.style.backgroundColor = '#FF7F7F';
+            } else {
+                rowDoc.cells[7].textContent = rowDoc.cells[7].textContent +  o.transactiontype + '::'+ o.tradingsymbol + '::@' +o.price +' '+o.text + ' '
+            }
+            
         })
     }).catch(err => rowDoc.cells[7].textContent = 'Unable to get Order book '+ err)
 }
-
 function isThresholdCrossed() {
     const toBeDeletedKeys = []
     //console.log(cache.legs)

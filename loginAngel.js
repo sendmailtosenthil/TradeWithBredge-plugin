@@ -38,6 +38,8 @@ function loadAngels() {
             api_key: ANGEL_API_KEY
         });
         loginUser(false);
+    } else {
+        showConnectForm()
     }
 }
 
