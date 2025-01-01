@@ -6,7 +6,7 @@ function onLoginError(ex){
         alert('Reach to Telegram User @TradeWithBredge Error : ' + ex)
     } else {
         alert('Try again. Invalid credentials. Use MPIN and not LOGIN PASSWORD. '+ ex)
-        showConnectForm()
+        //showConnectForm()
     }
 }
 
@@ -35,19 +35,25 @@ function loadAngels() {
     
     if (isOneTimeSetUpDone()) {
         ANGEL_ONE = new SmartApi({
-            api_key: ANGEL_API_KEY
+            api_key: ANGEL_API_KEY,
+            client_code: ANGEL_USERNAME,
+            totp: generateOtp(),
         });
         loginUser(false);
-    } else {
-        showConnectForm()
-    }
+    } 
 }
+
 
 function saveCredentials() {
     ANGEL_USERNAME = document.getElementById('username').value;
     ANGEL_PASSWORD = document.getElementById('password').value;
     ANGEL_API_KEY = document.getElementById('apiKey').value;
     ANGEL_TOTP_SECRET = document.getElementById('totpSecret').value;
+    ANGEL_ONE = new SmartApi({
+        api_key: ANGEL_API_KEY,
+        client_code: ANGEL_USERNAME,
+        totp: generateOtp(),
+    });
     loginUser(true);    
 }
 
@@ -56,6 +62,7 @@ function isOneTimeSetUpDone(){
     ANGEL_PASSWORD = localStorage.getItem('ANGEL_PASSWORD');
     ANGEL_API_KEY = localStorage.getItem('ANGEL_API_KEY');
     ANGEL_TOTP_SECRET = localStorage.getItem('ANGEL_TOTP_SECRET');
+    console.log("ANGEL_USERNAME", ANGEL_USERNAME)
     return !(!ANGEL_USERNAME || !ANGEL_PASSWORD || !ANGEL_API_KEY || !ANGEL_TOTP_SECRET) 
 }
 
@@ -69,14 +76,16 @@ function isUserAlredyLoggedIn(){
 }
 
 function loginUser(saveLoginDetails = false){
-    console.log("New token - Angel")
+    console.log("New token - Angel ", saveLoginDetails)
     // Generate new session if no credentials or generated before 8 AM
     let totp_code = generateOtp();
-    //console.log(ANGEL_USERNAME, ANGEL_API_KEY, totp_code)
+    console.log(ANGEL_USERNAME, ANGEL_PASSWORD, ANGEL_API_KEY, totp_code)
     ANGEL_ONE
         .generateSession(ANGEL_USERNAME, ANGEL_PASSWORD, totp_code)
         .then((data) => {
+            console.log('Session :::',data)
             credentials = {...data.data};
+            console.log('Credntail :::',credentials)
             // Store credentials and timestamp
             localStorage.setItem('angelCredentials', JSON.stringify(credentials));
             localStorage.setItem('lastTokenTime', new Date().toISOString());
@@ -86,6 +95,7 @@ function loginUser(saveLoginDetails = false){
                 localStorage.setItem('ANGEL_API_KEY', ANGEL_API_KEY);
                 localStorage.setItem('ANGEL_TOTP_SECRET', ANGEL_TOTP_SECRET);
             }
+            //return json
         })
         .then((data) => {
             console.log(data)
