@@ -1,9 +1,34 @@
 const cache = {};
   
 const tokenPriceCache = {} 
+const tokenCounter = {}
 let rowNumber = 1;
 let maxOrder = 2;
 let orderNumber = 0;
+let indexes = {
+    difference: 5,
+    buyPrice: 6,
+    sellPrice: 7,
+    status: 8,
+    action: 10
+}
+
+function removeCache(rowId){
+    tokenCounter[cache[rowId].buyToken] = tokenCounter[cache[rowId].buyToken] - 1;
+    tokenCounter[cache[rowId].sellToken] = tokenCounter[cache[rowId].sellToken] - 1;
+    delete cache[rowId];
+    let toBeUnsubscribeTokens = Object.keys(tokenCounter).filter(token => tokenCounter[token] == 0)
+    console.log('Unsubscribe ', toBeUnsubscribeTokens);
+    if(toBeUnsubscribeTokens.length > 0){
+        ticker.fetchData({
+            "correlationID": `Plug${rowId}`, 
+            "action":ACTION.Unsubscribe, 
+            "mode": MODE.SnapQuote, 
+            "exchangeType": EXCHANGES.nse_fo, 
+            "tokens": toBeUnsubscribeTokens
+        })
+    }    
+}
 
 function monitorRow(row){
     cache[row.rowId] = {
@@ -16,6 +41,8 @@ function monitorRow(row){
         buyScript: row.buyScript,
         sellScript: row.sellScript
     }
+    tokenCounter[row.buyToken] = tokenCounter[row.buyToken] ? tokenCounter[row.buyToken] + 1 : 1;
+    tokenCounter[row.sellToken] = tokenCounter[row.sellToken] ? tokenCounter[row.sellToken] + 1 : 1;
     tickerConnect(subscribe, [row.buyToken, row.sellToken], row.rowId)
 }
 
@@ -26,6 +53,17 @@ function isNotValid(){
     }
     return false;
 }
+
+function cancelRow(rowId) {
+    const row = document.getElementById(rowId);
+    if (row) {
+        row.cells[indexes['status']].textContent = 'Cancelled';
+        row.style.backgroundColor = '#FFFFC5';
+        row.cells[indexes['action']].textContent = '';
+    }
+    removeCache(rowId);
+    console.log("Cache", cache);
+  }
 
 function addNewRow() {
     if(isNotValid()){
@@ -50,6 +88,7 @@ function addNewRow() {
     const cells = [
       {value: `${baseInstrument}${buyExpiry}${buyScript}`},
       {value: `${baseInstrument}${sellExpiry}${sellScript}`},
+      {value: quantity},
       {value: depth},
       {value: threshold},
       {value: '0'},
@@ -64,12 +103,19 @@ function addNewRow() {
       cell.textContent = value;
     });
 
+    // Add a Cancel button
+    const cancelCell = row.insertCell();
+    const cancelButton = document.createElement('button');
+    cancelButton.textContent = 'Cancel';
+    cancelButton.addEventListener('click', () => cancelRow(row.id));
+    cancelCell.appendChild(cancelButton);
+
     // Clear form inputs
-    document.getElementById('buyScript').value = '';
-    document.getElementById('sellScript').value = '';
-    document.getElementById('depth').value = '2';
+    //document.getElementById('buyScript').value = '';
+    //document.getElementById('sellScript').value = '';
+    document.getElementById('depth').value = '3';
     document.getElementById('threshold').value = '';
-    document.getElementById('quantity').value = '';
+    //document.getElementById('quantity').value = '';
     document.getElementById('orderPlz').checked = false;
     
     rowNumber++;
@@ -108,11 +154,11 @@ function initTicker(event){
 
 function updatePrices(key, buyPrice, sellPrice){
     const rowDoc = document.getElementById(key);
-    rowDoc.cells[5].textContent = buyPrice;
-    rowDoc.cells[6].textContent = sellPrice;
+    rowDoc.cells[indexes['buyPrice']].textContent = buyPrice;
+    rowDoc.cells[indexes['sellPrice']].textContent = sellPrice;
     const difference = Number(Math.abs(buyPrice - sellPrice).toFixed(2));
-    rowDoc.cells[4].textContent = difference;
-    rowDoc.cells[7].textContent = 'Running'
+    rowDoc.cells[indexes['difference']].textContent = difference;
+    rowDoc.cells[indexes['status']].textContent = 'Running'
 }
 
 function placeOrder(row, rowId) {
@@ -135,7 +181,7 @@ function placeOrder(row, rowId) {
         "quantity": String(row.quantity)
     }).then(data => {
         console.log("Buy success", data)
-        rowDoc.cells[7].textContent = ' Buy '+ data.message + ' order id '+ data?.data?.orderid
+        rowDoc.cells[indexes['status']].textContent = ' Buy '+ data.message + ' order id '+ data?.data?.orderid
         if(data.data.orderid){
             orders.push(data.data.uniqueorderid)
             ANGEL_ONE.placeOrder({
@@ -150,7 +196,7 @@ function placeOrder(row, rowId) {
                 "quantity": String(row.quantity)
             }).then(sellData => {
                 console.log("Sell success", sellData)
-                rowDoc.cells[7].textContent = rowDoc.cells[7].textContent + ' Sell '+ sellData?.message + ' order '+ sellData?.data?.orderid + ' '
+                rowDoc.cells[indexes['status']].textContent = rowDoc.cells[indexes['status']].textContent + ' Sell '+ sellData?.message + ' order '+ sellData?.data?.orderid + ' '
                 if(sellData.data.orderid){
                     orders.push(sellData.data.uniqueorderid)
                     getOrderBook(orders, rowDoc)
@@ -159,7 +205,7 @@ function placeOrder(row, rowId) {
                 }
             }).catch(exe => {
                 console.log("Sell Failed ", exe)
-                rowDoc.cells[7].textContent = rowDoc.cells[7].textContent + ' Sell Failed '+exe
+                rowDoc.cells[indexes['status']].textContent = rowDoc.cells[indexes['status']].textContent + ' Sell Failed '+exe
             })
         } else {
             getOrderBook(orders, rowDoc)
@@ -167,7 +213,7 @@ function placeOrder(row, rowId) {
         }
     }).catch(ex => {
         console.log("Buy Failed ", ex)
-        rowDoc.cells[7].textContent = 'Buy Failed '+ ex
+        rowDoc.cells[indexes['status']].textContent = 'Buy Failed '+ ex
     })
     
 }
@@ -178,19 +224,19 @@ function getOrderBook(orders, rowDoc){
         console.log("Fetched orders ", fetchedOrders)
         let executedOrders = fetchedOrders.data.filter(o => orders.includes(o.uniqueorderid))
         if(orders.length != executedOrders.length){
-            rowDoc.cells[7].textContent = rowDoc.cells[7].textContent + 'Missing orders '+ orders
+            rowDoc.cells[indexes['status']].textContent = rowDoc.cells[indexes['status']].textContent + 'Missing orders '+ orders
             rowDoc.style.backgroundColor = '#FF7F7F';
         }
         executedOrders.forEach(o => {
             if(o.orderstatus == 'rejected'){
-                rowDoc.cells[7].textContent = rowDoc.cells[7].textContent + `[${o.transactiontype}]`+ o.text + ' '
+                rowDoc.cells[indexes['status']].textContent = rowDoc.cells[indexes['status']].textContent + `[${o.transactiontype}]`+ o.text + ' '
                 rowDoc.style.backgroundColor = '#FF7F7F';
             } else {
-                rowDoc.cells[7].textContent = rowDoc.cells[7].textContent +  o.transactiontype + '::'+ o.tradingsymbol + '::@' +o.price +' '+o.text + ' '
+                rowDoc.cells[indexes['status']].textContent = rowDoc.cells[indexes['status']].textContent +  o.transactiontype + '::'+ o.tradingsymbol + '::@' +o.price +' '+o.text + ' '
             }
             
         })
-    }).catch(err => rowDoc.cells[7].textContent = 'Unable to get Order book '+ err)
+    }).catch(err => rowDoc.cells[indexes['status']].textContent = 'Unable to get Order book '+ err)
 }
 function isThresholdCrossed() {
     const toBeDeletedKeys = []
@@ -207,27 +253,20 @@ function isThresholdCrossed() {
             if(difference.toFixed(2) <= threshold){
                 console.log("Difference is less than threshold ");
                 // if(Object.keys(tokenPriceCache).length % 2 == 0) {
-                //   ticker.fetchData({
-                //       "correlationID": `Plug${key}`, 
-                //       "action":ACTION.Unsubscribe, 
-                //       "mode": MODE.SnapQuote, 
-                //       "exchangeType": EXCHANGES.nse_fo, 
-                //       "tokens": leg.previousTokens
-                //   })
-                // }
+                
                 toBeDeletedKeys.push(key)
                 const alertSound = document.getElementById(`alertSound`);
                 alertSound.play();
                 placeOrder(leg, key)
                 const rowDoc = document.getElementById(key);
                 // Add this line to change background color
-                rowDoc.cells[7].textContent = 'Completed'
+                rowDoc.cells[indexes['status']].textContent = 'Completed'
                 rowDoc.style.backgroundColor = '#90EE90';
             }
         }
     })
     toBeDeletedKeys.forEach(key => {
-        delete cache[key]
+        removeCache(key)
     })  
 }
 
@@ -260,6 +299,7 @@ function getTokenFromSymbol(baseInstrument, expiry, script) {
 function tickerConnect(subscribe, tokens, rowId){
     if(!ticker.isAlreadyConnected()){
         ticker.connect().then(data=>{
+            console.log("New Connected....");
             Object.keys(cache).forEach(key => {
                 subscribe([Number(cache[key].buyToken), Number(cache[key].sellToken)], key)
             })

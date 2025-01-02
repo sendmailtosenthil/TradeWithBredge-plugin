@@ -61,19 +61,19 @@
   <div class="form-container">
     <div class="form-group">
       <label for="buyScript">Buy Leg Script:</label>
-      <input type="text" id="buyScript" placeholder="Enter buy script name (SYMBOL/TOKEN)" value="NIFTY25JAN26300CE/11932930">
+      <input type="text" id="buyScript" placeholder="Enter buy script name (SYMBOL/TOKEN)" value="NIFTY2511624200CE/13494530">
     </div>
     <div class="form-group">
       <label for="sellScript">Sell Leg Script:</label>
-      <input type="text" id="sellScript" placeholder="Enter sell script name (SYMBOL/TOKEN)" value="NIFTY25JAN26400CE/11936258">
+      <input type="text" id="sellScript" placeholder="Enter sell script name (SYMBOL/TOKEN)" value="NIFTY2510924200CE/12322562">
     </div>
     <div class="form-group">
       <label for="depth">Depth:</label>
-      <input type="number" id="depth" step="1" placeholder="Depth between 1 to 5" value="2">
+      <input type="number" id="depth" step="1" placeholder="Depth between 1 to 5" value="5">
     </div>
     <div class="form-group">
-      <label for="threshold">Threshold:</label>
-      <input type="number" id="threshold" step="0.5" placeholder="Enter threshold" value="2">
+      <label for="threshold">Premium Difference:</label>
+      <input type="number" id="threshold" step="0.5" placeholder="Enter premium difference" value="2">
     </div>
     <div class="form-group">
       <label for="quantity">Quantity:</label>
@@ -86,6 +86,7 @@
     <button id="addFormButton">Add Monitoring</button>
   </div>
   <div class="form-group">
+    <div id="disclaimer"><b>Disclaimer:</b> Clicking on Add Monitoring means "I understand the risk of using this plugin. Any bugs / issues in the plugin are accepted by me and aware of financial losses. I do not claim / blame anyone for any financial losses" </div>
     <div id="status">Yet to Connect</div>
   </div>
   <table id="alertsTable">
@@ -93,13 +94,15 @@
       <tr>
         <th>Buy Leg</th>
         <th>Sell Leg</th>
+        <th>Quantity</th>
         <th>Depth</th>
-        <th>Threshold</th>
-        <th>Difference</th>
+        <th>Expected Difference</th>
+        <th>Actual Difference</th>
         <th>Best Buy Price</th>
         <th>Best Sell Price</th>
         <th>Status</th>
         <th>Place Order</th>
+        <th>Action</th>
       </tr>
     </thead>
     <tbody id="alertsTableBody">

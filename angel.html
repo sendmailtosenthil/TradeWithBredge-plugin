@@ -67,9 +67,9 @@
 <body>
   <div id="connect-form" style="display: block;">
     <input type="text" id="username" placeholder="Angel Username" />
-    <input type="password" id="password" placeholder="Angel Password" />
+    <input type="password" id="password" placeholder="Angel MPIN" />
     <input type="password" id="apiKey" placeholder="Angel API Key" />
-    <input type="password" id="totpSecret" placeholder="TOTP KEY" />
+    <input type="password" id="totpSecret" placeholder="TOTP Secret" />
     <input type="hidden" id="attempt" value="1" />
     <button id="connect">Connect</button>
   </div>
@@ -123,8 +123,8 @@
         <input type="number" id="depth" step="1" placeholder="Depth between 1 to 5" value="2">
       </div>
       <div class="form-group">
-        <label for="threshold">Threshold:</label>
-        <input type="number" id="threshold" step="0.5" placeholder="Enter threshold" value="0.7">
+        <label for="threshold">Premium Difference:</label>
+        <input type="number" id="threshold" step="0.5" placeholder="Enter Premium Difference" value="0.7">
       </div>
     </div>
 
@@ -146,13 +146,15 @@
       <tr>
         <th>Buy Leg</th>
         <th>Sell Leg</th>
+        <th>Quantity</th>
         <th>Depth</th>
-        <th>Threshold</th>
-        <th>Difference</th>
+        <th>Expected Difference</th>
+        <th>Actual Difference</th>
         <th>Best Buy Price</th>
         <th>Best Sell Price</th>
         <th>Status</th>
         <th>Place Order</th>
+        <th>Action</th>
       </tr>
     </thead>
     <tbody id="alertsTableBody">

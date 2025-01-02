@@ -6,10 +6,18 @@ const cookie_info = {
     authorization: null
 }
 let zerodhaCache = {}
-
+const tokenCounter = {}
 const tokenPricesCache = {
 
 };
+
+let indexes = {
+  difference: 5,
+  buyPrice: 6,
+  sellPrice: 7,
+  status: 8,
+  action: 10
+}
 
 chrome.runtime.sendMessage({action: 'getCookies'}, (response) => {
     const {user_id, enctoken} = response;
@@ -76,22 +84,23 @@ function calculateRowPrices(){
         const row = zerodhaCache[rowId];
         const buyToken = row.buyToken;
         const sellToken = row.sellToken;
-        row.buyPrice = tokenPricesCache[buyToken]?.sellPrices[row.depth]?.price || 0;
-        row.sellPrice = tokenPricesCache[sellToken]?.buyPrices[row.depth]?.price || 0;
-        console.log("Buy Price", row.buyPrice, "Sell Price", row.sellPrice, rowId, row);
+        console.log("tokenPricesCache ", tokenPricesCache, buyToken, sellToken);
+        row.buyPrice = tokenPricesCache[buyToken]?.sellPrices[row.depth-1]?.price || 0;
+        row.sellPrice = tokenPricesCache[sellToken]?.buyPrices[row.depth-1]?.price || 0;
+        console.log("Buy Price", row.buyPrice, "Sell Price", row.sellPrice);
         const rowDoc = document.getElementById(rowId);
-        rowDoc.cells[5].textContent = row.buyPrice;
-        rowDoc.cells[6].textContent = row.sellPrice;
+        rowDoc.cells[indexes['buyPrice']].textContent = row.buyPrice;
+        rowDoc.cells[indexes['sellPrice']].textContent = row.sellPrice;
         if(row.buyPrice > 0 && row.sellPrice > 0){
             const diff = Number(Math.abs(row.buyPrice - row.sellPrice).toFixed(2));
-            rowDoc.cells[4].textContent = diff;
-            rowDoc.cells[7].textContent = 'Running'
+            rowDoc.cells[indexes['difference']].textContent = diff;
+            rowDoc.cells[indexes['status']].textContent = 'Running'
             if(diff <= row.threshold){
                 console.log("Difference is less than threshold & unsubscribed tokens");
                 const alertSound = document.getElementById('alertSound');
                 alertSound.play();
                 toBeDeleted.push(rowId)    
-                rowDoc.cells[7].textContent = 'Completed'
+                rowDoc.cells[indexes['status']].textContent = 'Completed'
                 rowDoc.style.backgroundColor = '#90EE90';
                 if(row.orderFlag){
                     console.log("Order Placed");
@@ -103,7 +112,7 @@ function calculateRowPrices(){
                     }, {'transactiontype': 'SELL',
                       'quantity': row.quantity,
                       'tradingsymbol': row.sellScript}, (txt, success)=>{
-                        rowDoc.cells[7].textContent = txt
+                        rowDoc.cells[indexes['status']].textContent = txt
                         rowDoc.style.backgroundColor = success ? '#90EE90':'#FF7F7F';
                     });
                 }
@@ -112,7 +121,7 @@ function calculateRowPrices(){
     })
     if(toBeDeleted.length > 0){
         toBeDeleted.forEach(rowId => {
-            delete zerodhaCache[rowId];
+            removeCache(rowId);
         })
     }
     //renderRows();
@@ -120,6 +129,7 @@ function calculateRowPrices(){
 
 function onTicks(ticks) {
     ticks.forEach(tick => {
+      console.log(tick);
         if(tick?.depth?.buy){
             const instrumentToken = Number(tick.instrument_token);
             tokenPricesCache[instrumentToken] = {
@@ -164,6 +174,27 @@ function monitorRow(row){
     }
 }
 
+function removeCache(rowId){
+  tokenCounter[zerodhaCache[rowId].buyToken] = tokenCounter[zerodhaCache[rowId].buyToken] - 1;
+  tokenCounter[zerodhaCache[rowId].sellToken] = tokenCounter[zerodhaCache[rowId].sellToken] - 1;
+  delete zerodhaCache[rowId];
+  let toBeUnsubscribeTokens = Object.keys(tokenCounter).filter(token => tokenCounter[token] == 0)
+  console.log('Unsubscribe ', toBeUnsubscribeTokens);
+  if(toBeUnsubscribeTokens.length > 0){
+      ticker.unsubscribe(toBeUnsubscribeTokens)
+  }    
+}
+
+function cancelRow(rowId) {
+  const row = document.getElementById(rowId);
+  if (row) {
+      row.cells[indexes['status']].textContent = 'Cancelled';
+      row.style.backgroundColor = '#FFFFC5';
+      row.cells[indexes['action']].textContent = '';
+  }
+  removeCache(rowId);
+}
+
 function addNewRow() {
     const buyScript = document.getElementById('buyScript').value;
     const sellScript = document.getElementById('sellScript').value;
@@ -179,6 +210,7 @@ function addNewRow() {
     const cells = [
       {value: buyScript},
       {value: sellScript},
+      {value: quantity},
       {value: depth},
       {value: threshold},
       {value: '0'},
@@ -193,12 +225,19 @@ function addNewRow() {
       cell.textContent = value;
     });
 
+    // Add a Cancel button
+    const cancelCell = row.insertCell();
+    const cancelButton = document.createElement('button');
+    cancelButton.textContent = 'Cancel';
+    cancelButton.addEventListener('click', () => cancelRow(row.id));
+    cancelCell.appendChild(cancelButton);
+
     // Clear form inputs
-    document.getElementById('buyScript').value = '';
-    document.getElementById('sellScript').value = '';
+    //document.getElementById('buyScript').value = '';
+    //document.getElementById('sellScript').value = '';
     document.getElementById('depth').value = '';
     document.getElementById('threshold').value = '';
-    document.getElementById('quantity').value = '';
+    //document.getElementById('quantity').value = '';
     document.getElementById('orderPlz').checked = false;
     rowNumber++;
     
