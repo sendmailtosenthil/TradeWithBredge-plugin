@@ -73,7 +73,15 @@
     </div>
     <div class="form-group">
       <label for="threshold">Threshold:</label>
-      <input type="number" id="threshold" step="0.5" placeholder="Enter threshold" value="0.7">
+      <input type="number" id="threshold" step="0.5" placeholder="Enter threshold" value="2">
+    </div>
+    <div class="form-group">
+      <label for="quantity">Quantity:</label>
+      <input type="number" id="quantity" step="0.5" placeholder="Multiples of 30 (BANKNIFTY) or 75 (NIFTY))" value="25">
+    </div>
+    <div class="form-group">
+      <label for="orderPlz">Yes, I am aware of slippage on placing order:</label>
+      <input type="checkbox" id="orderPlz">
     </div>
     <button id="addFormButton">Add Monitoring</button>
   </div>
@@ -91,6 +99,7 @@
         <th>Best Buy Price</th>
         <th>Best Sell Price</th>
         <th>Status</th>
+        <th>Place Order</th>
       </tr>
     </thead>
     <tbody id="alertsTableBody">
@@ -100,6 +109,7 @@
   <audio id="alertSound" src="alert.mp3" preload="auto"></audio>
   <script src="config.js"></script>
   <script src="ticker.js"></script>
+  <script src="zerodha-connect.js"></script>
   <script src="zerodhaPage.js"></script>
 </body>
 </html>

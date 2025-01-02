@@ -5,9 +5,7 @@ const cookie_info = {
     enctoken: null,
     authorization: null
 }
-const cache = {
-
-}
+let zerodhaCache = {}
 
 const tokenPricesCache = {
 
@@ -73,9 +71,9 @@ function subscribe(tokens){
 
 function calculateRowPrices(){
     const toBeDeleted = [];
-    console.log("Calculating Row Prices", cache);
-    Object.keys(cache).forEach(rowId => {
-        const row = cache[rowId];
+    //console.log("Calculating Row Prices", zerodhaCache);
+    Object.keys(zerodhaCache).forEach(rowId => {
+        const row = zerodhaCache[rowId];
         const buyToken = row.buyToken;
         const sellToken = row.sellToken;
         row.buyPrice = tokenPricesCache[buyToken]?.sellPrices[row.depth]?.price || 0;
@@ -95,12 +93,26 @@ function calculateRowPrices(){
                 toBeDeleted.push(rowId)    
                 rowDoc.cells[7].textContent = 'Completed'
                 rowDoc.style.backgroundColor = '#90EE90';
+                if(row.orderFlag){
+                    console.log("Order Placed");
+                    row.orderFlag = false;
+                    placeCalendarOrder({
+                      'transactiontype': 'BUY',
+                      'quantity': row.quantity,
+                      'tradingsymbol': row.buyScript
+                    }, {'transactiontype': 'SELL',
+                      'quantity': row.quantity,
+                      'tradingsymbol': row.sellScript}, (txt, success)=>{
+                        rowDoc.cells[7].textContent = txt
+                        rowDoc.style.backgroundColor = success ? '#90EE90':'#FF7F7F';
+                    });
+                }
             }
         }
     })
     if(toBeDeleted.length > 0){
         toBeDeleted.forEach(rowId => {
-            delete cache[rowId];
+            delete zerodhaCache[rowId];
         })
     }
     //renderRows();
@@ -120,13 +132,20 @@ function onTicks(ticks) {
 }
 
 function monitorRow(row){
-    cache[row.rowId] = {
+  //console.log("Before adding row Cache", zerodhaCache, row);
+    zerodhaCache[row.rowId] = {
+        buyScript: row.buyScript.split('/')[0],
+        sellScript: row.sellScript.split('/')[0],
         buyToken: row.buyScript.split('/')[1],
         sellToken: row.sellScript.split('/')[1],
         depth: row.depth,
         threshold: row.threshold,
         status: 'Yet to Start',
+        orderFlag: row.orderFlag,
+        quantity: row.quantity
     }
+    //console.log("Cache", zerodhaCache);
+    //console.log("Cache row", zerodhaCache[row.rowId]);
 
     if(ticker == null || !ticker.isAlreadyConnected()){
         ticker.connect();
@@ -135,10 +154,13 @@ function monitorRow(row){
             ticker.on("error", function(e) {
                 console.log("Error", e);
             });
-            subscribe([Number(cache[row.rowId].buyToken), Number(cache[row.rowId].sellToken)]);
+            Object.keys(zerodhaCache).forEach(rowId => {
+                subscribe([Number(zerodhaCache[rowId].buyToken), Number(zerodhaCache[rowId].sellToken)]);
+            });
+            //subscribe([Number(cache[row.rowId].buyToken), Number(cache[row.rowId].sellToken)]);
         });
     } else {
-        subscribe([Number(cache[row.rowId].buyToken), Number(cache[row.rowId].sellToken)]);
+        subscribe([Number(zerodhaCache[row.rowId].buyToken), Number(zerodhaCache[row.rowId].sellToken)]);
     }
 }
 
@@ -147,6 +169,8 @@ function addNewRow() {
     const sellScript = document.getElementById('sellScript').value;
     const depth = document.getElementById('depth').value;
     const threshold = document.getElementById('threshold').value;
+    const quantity = document.getElementById('quantity').value;
+    const orderFlag = document.getElementById('orderPlz').checked;
     
     const tbody = document.getElementById('alertsTableBody');
     const row = tbody.insertRow();
@@ -161,6 +185,7 @@ function addNewRow() {
       {value: '0'},
       {value: '0'},
       {value: 'Yet to Start'},
+      {value: orderFlag}
     ];
 
     cells.forEach(({value}) => {
@@ -173,14 +198,19 @@ function addNewRow() {
     document.getElementById('sellScript').value = '';
     document.getElementById('depth').value = '';
     document.getElementById('threshold').value = '';
+    document.getElementById('quantity').value = '';
+    document.getElementById('orderPlz').checked = false;
     rowNumber++;
+    
     monitorRow({
         buyScript: buyScript,
         sellScript: sellScript,
         depth: depth,
         threshold: Number(Number(threshold).toFixed(2)),
         rowId: row.id,
-        status: 'Yet to Start'
+        status: 'Yet to Start',
+        orderFlag: orderFlag,
+        quantity: quantity
     });
   }
 
