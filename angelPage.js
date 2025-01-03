@@ -39,7 +39,8 @@ function monitorRow(row){
         quantity: row.quantity,
         orderFlag: row.orderFlag,
         buyScript: row.buyScript,
-        sellScript: row.sellScript
+        sellScript: row.sellScript,
+        premiumLess: row.premiumLess
     }
     tokenCounter[row.buyToken] = tokenCounter[row.buyToken] ? tokenCounter[row.buyToken] + 1 : 1;
     tokenCounter[row.sellToken] = tokenCounter[row.sellToken] ? tokenCounter[row.sellToken] + 1 : 1;
@@ -73,6 +74,7 @@ function addNewRow() {
     const sellScript = document.getElementById('sellScript').value;
     const depth = document.getElementById('depth').value;
     const threshold = document.getElementById('threshold').value;
+    const premiumLess = document.getElementById('premiumLess').value;
     const quantity = document.getElementById('quantity').value;
     const orderFlag = document.getElementById('orderPlz').checked;
     const baseInstrument = document.getElementById('baseInstrument').value;
@@ -90,7 +92,7 @@ function addNewRow() {
       {value: `${baseInstrument}${sellExpiry}${sellScript}`},
       {value: quantity},
       {value: depth},
-      {value: threshold},
+      {value: `${(premiumLess == 'lt' ? '< ' : '> ') + threshold}`},
       {value: '0'},
       {value: '0'},
       {value: '0'},
@@ -111,11 +113,8 @@ function addNewRow() {
     cancelCell.appendChild(cancelButton);
 
     // Clear form inputs
-    //document.getElementById('buyScript').value = '';
-    //document.getElementById('sellScript').value = '';
     document.getElementById('depth').value = '3';
     document.getElementById('threshold').value = '';
-    //document.getElementById('quantity').value = '';
     document.getElementById('orderPlz').checked = false;
     
     rowNumber++;
@@ -128,7 +127,8 @@ function addNewRow() {
         quantity: quantity,
         orderFlag: orderFlag,
         buyScript: `${baseInstrument}${buyExpiry}${buyScript}`,
-        sellScript: `${baseInstrument}${sellExpiry}${sellScript}`
+        sellScript: `${baseInstrument}${sellExpiry}${sellScript}`,
+        premiumLess: premiumLess == 'lt' ? true : false
     })
 }
 
@@ -238,6 +238,12 @@ function getOrderBook(orders, rowDoc){
         })
     }).catch(err => rowDoc.cells[indexes['status']].textContent = 'Unable to get Order book '+ err)
 }
+
+function isEligible(premiumLess, threshold, difference){
+    difference = Number(difference.toFixed(2))
+    return ((premiumLess && difference <= threshold) || (!premiumLess && difference >= threshold))
+}
+
 function isThresholdCrossed() {
     const toBeDeletedKeys = []
     //console.log(cache.legs)
@@ -249,8 +255,8 @@ function isThresholdCrossed() {
         if(buyPrice > 0 && sellPrice > 0) {
             updatePrices(key, buyPrice, sellPrice)
             const threshold = leg.threshold;
-            const difference = Number(Math.abs(buyPrice - sellPrice).toFixed(2));
-            if(difference.toFixed(2) <= threshold){
+            const difference = Math.abs(buyPrice - sellPrice);
+            if(isEligible(leg.premiumLess, threshold, difference)) {
                 console.log("Difference is less than threshold ");
                 // if(Object.keys(tokenPriceCache).length % 2 == 0) {
                 

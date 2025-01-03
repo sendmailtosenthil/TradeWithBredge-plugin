@@ -95,7 +95,7 @@ function calculateRowPrices(){
             const diff = Number(Math.abs(row.buyPrice - row.sellPrice).toFixed(2));
             rowDoc.cells[indexes['difference']].textContent = diff;
             rowDoc.cells[indexes['status']].textContent = 'Running'
-            if(diff <= row.threshold){
+            if(isEligible(row.premiumLess, row.threshold, diff)){
                 console.log("Difference is less than threshold & unsubscribed tokens");
                 const alertSound = document.getElementById('alertSound');
                 alertSound.play();
@@ -152,7 +152,8 @@ function monitorRow(row){
         threshold: row.threshold,
         status: 'Yet to Start',
         orderFlag: row.orderFlag,
-        quantity: row.quantity
+        quantity: row.quantity,
+        premiumLess: row.premiumLess
     }
     //console.log("Cache", zerodhaCache);
     //console.log("Cache row", zerodhaCache[row.rowId]);
@@ -195,10 +196,15 @@ function cancelRow(rowId) {
   removeCache(rowId);
 }
 
+function isEligible(premiumLess, threshold, difference){
+  return ((premiumLess && difference <= threshold) || (!premiumLess && difference >= threshold))
+}
+
 function addNewRow() {
     const buyScript = document.getElementById('buyScript').value;
     const sellScript = document.getElementById('sellScript').value;
     const depth = document.getElementById('depth').value;
+    const premiumLess = document.getElementById('premiumLess').value;
     const threshold = document.getElementById('threshold').value;
     const quantity = document.getElementById('quantity').value;
     const orderFlag = document.getElementById('orderPlz').checked;
@@ -212,7 +218,7 @@ function addNewRow() {
       {value: sellScript},
       {value: quantity},
       {value: depth},
-      {value: threshold},
+      {value: `${(premiumLess == 'lt' ? '< ' : '> ') + threshold}`},
       {value: '0'},
       {value: '0'},
       {value: '0'},
@@ -249,7 +255,8 @@ function addNewRow() {
         rowId: row.id,
         status: 'Yet to Start',
         orderFlag: orderFlag,
-        quantity: quantity
+        quantity: quantity,
+        premiumLess: premiumLess == 'lt' ? true : false
     });
   }
 

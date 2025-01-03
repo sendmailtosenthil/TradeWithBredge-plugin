@@ -144,9 +144,13 @@
         </label>
         <input type="number" id="depth" step="1" placeholder="Depth between 1 to 5" value="2">
       </div>
-      <div class="form-group">
+      <div class="form-group" style="display: flex; align-items: right; gap: 3px;">
         <label for="threshold">Premium Difference:</label>
-        <input type="number" id="threshold" step="0.5" placeholder="Enter Premium Difference" value="0.7">
+        <select id="premiumLess" style="width: 100px !important;">
+          <option value="lt">Less Than</option>
+          <option value="gt">More Than</option>
+        </select>
+        <input type="number" id="threshold" step="0.5" placeholder="Enter Premium Difference" value="0.7" style="width: 120px !important;">
       </div>
     </div>
 
@@ -160,11 +164,9 @@
       </div>
     </div>
   </div>
+  
   <div class="form-group">
     <div id="disclaimer"><b>Disclaimer:</b> Clicking on Add Monitoring means "I understand the risk of using this plugin. Any bugs / issues in the plugin are accepted by me and aware of financial losses. I do not claim / blame anyone for any financial losses" </div>
-    <div id="status">Yet to Connect</div>
-  </div>
-  <div class="form-group">
     <div id="status" style="display: none;">Yet to Connect</div>
   </div>
   <table id="alertsTable" style="display: none;">
@@ -174,7 +176,7 @@
         <th>Sell Leg</th>
         <th>Quantity</th>
         <th>Depth</th>
-        <th>Expected Difference</th>
+        <th>Premium Difference</th>
         <th>Actual Difference</th>
         <th>Best Buy Price</th>
         <th>Best Sell Price</th>

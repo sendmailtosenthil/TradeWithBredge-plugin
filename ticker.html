@@ -55,6 +55,18 @@
     .editable:hover {
       background-color: #e6e6e6;
     }
+    .premium-controls {
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .premium-controls select {
+      padding: 5px;
+    }
+
+    .premium-controls input {
+      width: 200px;
+    }
   </style>
 </head>
 <body>
@@ -73,7 +85,13 @@
     </div>
     <div class="form-group">
       <label for="threshold">Premium Difference:</label>
-      <input type="number" id="threshold" step="0.5" placeholder="Enter premium difference" value="2">
+      <div class="premium-controls">
+        <select id="premiumLess" style="width: 120px; margin-right: 10px;">
+          <option value="lt">Less Than</option>
+          <option value="gt">More Than</option>
+        </select>
+        <input type="number" id="threshold" step="0.5" placeholder="Enter premium difference" value="2">
+      </div>
     </div>
     <div class="form-group">
       <label for="quantity">Quantity:</label>
