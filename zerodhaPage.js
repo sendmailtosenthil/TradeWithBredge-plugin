@@ -58,6 +58,8 @@ function loadUser() {
         .then(data => {
             console.log('Data : ', data);
             document.getElementById('status').textContent = 'Logged in as :' + data.data.user_id
+            const myEvent = new CustomEvent('calender-loaded', {"detail":{}});
+            document.dispatchEvent(myEvent)
         })
         .catch(error => {
         console.log('Error : ', error);

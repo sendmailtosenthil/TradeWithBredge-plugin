@@ -150,6 +150,8 @@ function initTicker(event){
     document.getElementById('alertsTable').style.display = 'block';
     document.getElementById('status').style.display = 'block';
     document.getElementById('status').textContent = 'Logged in as :' + credentials.ANGEL_USERNAME;
+    const myEvent = new CustomEvent('calender-loaded', {"detail":{}});
+    document.dispatchEvent(myEvent)
 }
 
 function updatePrices(key, buyPrice, sellPrice){
