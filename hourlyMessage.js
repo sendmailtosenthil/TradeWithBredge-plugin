@@ -12,10 +12,7 @@ const messages = {
 }
 
 document.addEventListener('calender-loaded', (event) => {
-    setTimeout(() => {
-        showOverlay();
-    }, 1000 * 60 * 60 * 1 + 1000 * 60 * 30); //60 * 60 * 2
-    //showOverlay();
+    scheduleOverlayFor315PM();
     document.getElementById('close-ad').addEventListener('click', closeOverlay);
 });
 
@@ -27,13 +24,23 @@ function showOverlay() {
     
 }
 
-function closeOverlay() {
-    document.getElementById('hourlyOverlay').style.display = 'none';
+function scheduleOverlayFor315PM() {
+    const now = new Date();
+    const targetTime = new Date();
+    targetTime.setHours(15, 15, 0); // Set for 3:15 PM
+
+    if (now > targetTime) {
+        return
+    }
+
+    const timeUntilTarget = targetTime - now;
     setTimeout(() => {
         showOverlay();
-    }, 1000 * 60 * 60 * 1 + 1000 * 60 * 30);
+        // Schedule next day after showing
+        scheduleOverlayFor315PM();
+    }, timeUntilTarget);
 }
 
-// Show overlay every hour
-//setInterval(showOverlay, 1000 * 10); // 3600000 ms = 1 hour
-  
+function closeOverlay() {
+    document.getElementById('hourlyOverlay').style.display = 'none';
+}

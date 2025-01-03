@@ -14,20 +14,22 @@ let indexes = {
 }
 
 function removeCache(rowId){
-    tokenCounter[cache[rowId].buyToken] = tokenCounter[cache[rowId].buyToken] - 1;
-    tokenCounter[cache[rowId].sellToken] = tokenCounter[cache[rowId].sellToken] - 1;
-    delete cache[rowId];
-    let toBeUnsubscribeTokens = Object.keys(tokenCounter).filter(token => tokenCounter[token] == 0)
-    console.log('Unsubscribe ', toBeUnsubscribeTokens);
-    if(toBeUnsubscribeTokens.length > 0){
-        ticker.fetchData({
-            "correlationID": `Plug${rowId}`, 
-            "action":ACTION.Unsubscribe, 
-            "mode": MODE.SnapQuote, 
-            "exchangeType": EXCHANGES.nse_fo, 
-            "tokens": toBeUnsubscribeTokens
-        })
-    }    
+    if(cache[rowId]){
+        tokenCounter[cache[rowId].buyToken] = tokenCounter[cache[rowId].buyToken] - 1;
+        tokenCounter[cache[rowId].sellToken] = tokenCounter[cache[rowId].sellToken] - 1;
+        delete cache[rowId];
+        let toBeUnsubscribeTokens = Object.keys(tokenCounter).filter(token => tokenCounter[token] == 0)
+        console.log('Unsubscribe ', toBeUnsubscribeTokens);
+        if(toBeUnsubscribeTokens.length > 0){
+            ticker.fetchData({
+                "correlationID": `Plug${rowId}`, 
+                "action":ACTION.Unsubscribe, 
+                "mode": MODE.SnapQuote, 
+                "exchangeType": EXCHANGES.nse_fo, 
+                "tokens": toBeUnsubscribeTokens
+            })
+        } 
+    }   
 }
 
 function monitorRow(row){
@@ -57,17 +59,81 @@ function isNotValid(){
 
 function cancelRow(rowId) {
     const row = document.getElementById(rowId);
-    if (row) {
+    if (row && cache[rowId]) {
         row.cells[indexes['status']].textContent = 'Cancelled';
         row.style.backgroundColor = '#FFFFC5';
         row.cells[indexes['action']].textContent = '';
     }
     removeCache(rowId);
     console.log("Cache", cache);
-  }
+}
+
+function doValidation(){
+    const baseInstrument = document.getElementById('baseInstrument').value;
+    if(baseInstrument == ''){
+        alert('Please enter base instrument')
+        return false;
+    }
+    const buyScript = document.getElementById('buyScript').value;
+    if(buyScript == ''){
+        alert('Please enter Buy script')
+        return false;
+    }
+    const sellScript = document.getElementById('sellScript').value;
+    if(sellScript == ''){
+        alert('Please enter Sell script')
+        return false;
+    }
+    const depth = document.getElementById('depth').value;
+    if(depth == ''){
+        alert('Please enter depth')
+        return false;
+    }
+    const threshold = document.getElementById('threshold').value;
+    if(threshold == ''){
+        alert('Please enter premium difference')
+        return false;
+    }
+    const quantity = document.getElementById('quantity').value;
+    if(quantity == ''){
+        alert('Please enter Quantity')
+        return false;
+    }
+    if(baseInstrument == 'NIFTY'){
+        let isValidQty = parseInt(quantity) % 75;
+        if(isValidQty != 0){
+            alert('Please enter quantity in multiple of 75')
+            return false;
+        }
+    }
+    if(baseInstrument == 'BANKNIFTY'){
+        let isValidQty = parseInt(quantity) % 30;
+        if(isValidQty != 0){
+            alert('Please enter quantity in multiple of 30')
+            return false;
+        }
+    }
+    
+    let buyExpiry = document.getElementById(`buyExpiry`).value;
+    if(buyExpiry == ''){
+        alert('Please enter Buy Expiry')
+        return false;
+    }
+    let sellExpiry = document.getElementById(`sellExpiry`).value;
+    if(sellExpiry == ''){
+        alert('Please enter Sell Expiry')
+        return false;
+    }
+    const premiumLess = document.getElementById('premiumLess').value;
+    if(premiumLess == ''){
+        alert('Please enter Less Than or More Than premium')
+        return false;
+    }
+    return true;
+}
 
 function addNewRow() {
-    if(isNotValid()){
+    if(isNotValid() || !doValidation()){
         return
     }
     const buyScript = document.getElementById('buyScript').value;
@@ -115,6 +181,7 @@ function addNewRow() {
     // Clear form inputs
     document.getElementById('depth').value = '3';
     document.getElementById('threshold').value = '';
+    document.getElementById('premiumLess').value = '';
     document.getElementById('orderPlz').checked = false;
     
     rowNumber++;
