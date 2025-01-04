@@ -217,10 +217,10 @@
 <body>
   <div id="connect-form" style="display: block;">
     <div class="form-container">
-      <input type="text" id="username" placeholder="Angel Username" />
+      <input type="text" id="username" placeholder="Angel Username" value="K494385"/>
       <input type="password" id="password" placeholder="Angel MPIN" />
-      <input type="password" id="apiKey" placeholder="Angel API Key" />
-      <input type="password" id="totpSecret" placeholder="TOTP Secret" />
+      <input type="password" id="apiKey" placeholder="Angel API Key" value="BCLCBoPN"/>
+      <input type="password" id="totpSecret" placeholder="TOTP Secret" value="Z4ATWYOCPFKDNI7HEQPQWQ3DPU"/>
       <input type="hidden" id="attempt" value="1" />
       <button id="connect">Connect</button>
     </div>
@@ -236,7 +236,7 @@
   <div id="hourlyOverlay" class="overlay" style="display: none;">
     <div class="overlay-content">
       <h3><span id="ad"></span></h3>
-      <img src="qr.jpeg" alt="sendmailtosenthil@okicici" style="max-width: 200px; max-height: 200px;"/>
+      <img src="../assets/qr.jpeg" alt="sendmailtosenthil@okicici" style="max-width: 200px; max-height: 200px;"/>
       <button class="close-overlay" id="close-ad">Close</button>
     </div>
   </div>
@@ -343,18 +343,7 @@
       <tbody id="alertsTableBody">
       </tbody>
     </table>
-  <audio id="alertSound" src="../alert.mp3" preload="auto"></audio>
-  <script src="../config.js"></script>
-  <script src="angel_script_downloader.js"></script>
-  <script src="otpauth.umd.min.js"></script>
-  <script src="axios.min.js"></script>
-  <script src="angel_constants.js"></script>
-  <script src="angel_api.js"></script>
-  <script src="custom_binary_parser.js"></script>
-  <script src="angel_connect.js"></script>
-  <script src="angel_ticker.js"></script>
-  <script src="angel_login.js"></script>
-  <script src="angelPage.js"></script>
-  <script src="../hourlyMessage.js"></script>
+  <audio id="alertSound" src="../assets/alert.mp3" preload="auto"></audio>
+  <script src="bundle.js"></script>
 </body>
 </html>

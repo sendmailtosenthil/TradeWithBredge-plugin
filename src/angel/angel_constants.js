@@ -1,22 +1,22 @@
-const CONSTANTS = {
+export const CONSTANTS = {
 	websocketURL: 'wss://smartapisocket.angelone.in/smart-stream',
 	wsclientupdatesURL : 'wss://tns.angelone.in/smart-order-update',
 	Interval: 10000,
 };
 
-const ACTION = {
+export const ACTION = {
 	Subscribe: 1,
 	Unsubscribe: 0,
 };
 
-const MODE = {
+export const MODE = {
 	LTP: 1,
 	Quote: 2,
 	SnapQuote: 3,
 	Depth: 4,
 };
 
-const EXCHANGES = {
+export const EXCHANGES = {
 	nse_cm: 1,
 	nse_fo: 2,
 	bse_cm: 3,

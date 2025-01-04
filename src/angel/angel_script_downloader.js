@@ -80,3 +80,8 @@ function loadScripMasterData() {
 }
 
 loadScripMasterData();
+
+export const getNiftyExpiry = () => niftyExpiry
+export const getBankNiftyExpiry = () => bankniftyExpiry
+export const getNiftySymbols = () => niftySymbols
+export const getBankNiftySymbols = () => bankniftySymbols

@@ -59,3 +59,6 @@ const ANGEL_API = {
 	// "order.cancel": "/orders/{variety}/{order_id}",
 	// "order.trades": "/orders/{order_id}/trades",
 };
+module.exports = {
+	ANGEL_API: ANGEL_API
+}

@@ -1,4 +1,4 @@
-var KiteTicker = function(params) {
+const KiteTicker = function(params) {
 	var root = params.root || "wss://ws.kite.trade/";
 	var url = params.url
 
@@ -537,4 +537,4 @@ var KiteTicker = function(params) {
 	var self = this;
 };
 
-window.KiteTicker = KiteTicker;
+module.exports.KiteTicker = KiteTicker;

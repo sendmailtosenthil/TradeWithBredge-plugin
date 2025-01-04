@@ -1,3 +1,7 @@
+import {WebSocketV2} from './angel_ticker.js'
+import { getNiftyExpiry, getBankNiftyExpiry, getBankNiftySymbols, getNiftySymbols } from './angel_script_downloader.js';
+import { ACTION, MODE, EXCHANGES } from './angel_constants.js';
+import { getConnector } from './angel_login.js';
 const cache = {};
   
 const tokenPriceCache = {} 
@@ -12,6 +16,7 @@ let indexes = {
     status: 8,
     action: 10
 }
+let ticker
 
 function removeCache(rowId){
     if(cache[rowId]){
@@ -242,7 +247,7 @@ function updatePrices(key, buyPrice, sellPrice){
 }
 
 function placeOrder(order){
-    return ANGEL_ONE.placeOrder({
+    return getConnector().placeOrder({
         "variety":"NORMAL",
         "tradingsymbol":order.tradingsymbol,
         "symboltoken":String(order.token),
@@ -274,7 +279,7 @@ function parseResponse(resp){
             result.success = false
         }
     }
-    console.log('Parse Resp return', result, resp.orders)
+    //console.log('Parse Resp return', result, resp.orders)
     return {result, orders:resp.orders}
 }
 
@@ -297,7 +302,7 @@ async function placeCalenderOrder(buyOrder, sellOrder) {
 
 async function getOrderBook(orders, result){
     //console.log("Given orders ", orders)
-    let fetchedOrders = await ANGEL_ONE.getOrderBook().catch(err => {
+    let fetchedOrders = await getConnector().getOrderBook().catch(err => {
         return {
             msg:result.msg + ' Unable to get Order book '+err, 
             success: false
@@ -401,8 +406,8 @@ function getTokenFromSymbol(baseInstrument, expiry, script) {
     //expiry = expiry.substring(0, 5) + expiry.substring(7)
     const symbolKey = `${baseInstrument}${expiry}${script}`;
     return baseInstrument === 'NIFTY' 
-        ? Number(niftySymbols[symbolKey]) 
-        : Number(bankniftySymbols[symbolKey]);
+        ? Number(getNiftySymbols()[symbolKey]) 
+        : Number(getBankNiftySymbols()[symbolKey]);
 }
 
 function tickerConnect(subscribe, tokens, rowId){
@@ -435,7 +440,7 @@ function subscribe(tokens, rowId){
 
 document.getElementById('baseInstrument').addEventListener('change', function() {
     const selectedInstrument = document.getElementById('baseInstrument').value
-    const expiryValues = selectedInstrument === 'NIFTY' ? niftyExpiry : bankniftyExpiry;
+    const expiryValues = selectedInstrument === 'NIFTY' ? getNiftyExpiry() : getBankNiftyExpiry();
     const buyExpirySelect = document.getElementById("buyExpiry")
     const sellExpirySelect = document.getElementById("sellExpiry")
     // Clear existing options
@@ -478,7 +483,7 @@ function scheduleDisconnectAt345PM() {
     const timeUntilTarget = targetTime - now;
     setTimeout(() => {
         console.log('Clearing for the day')
-        if(ticker.isAlreadyConnected()){
+        if(ticker != null && ticker.isAlreadyConnected()){
             ticker.disconnect()
         }
         Object.keys(cache).forEach(key => delete cache[key])

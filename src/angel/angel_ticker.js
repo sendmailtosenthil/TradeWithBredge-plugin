@@ -1,10 +1,11 @@
 
+import {CONSTANTS, ACTION, MODE, EXCHANGES} from './angel_constants'
 let triggers = {
 	connect: [],
 	tick: [],
 };
 
-let WebSocketV2 = function (params) {
+export function WebSocketV2(params) {
 	try {
 		let { clientcode, jwttoken, apikey, feedtype } = params;
 		let self = this;
@@ -255,12 +256,12 @@ function LTP(buf) {
     const data = parser.parse(buf);
     
     return {
-        subscription_mode: data.uint8(formatter=Number),
-        exchange_type: data.uint8(formatter=Number),
+        subscription_mode: data.uint8(Number),
+        exchange_type: data.uint8(Number),
         token: data.token(new Uint8Array(buf.slice(2, 27))),
-        sequence_number: data.uint64(formatter=Number),
-        exchange_timestamp: data.uint64(formatter=Number),
-        last_traded_price: divisor(data.uint32(formatter=Number), 100)
+        sequence_number: data.uint64(Number),
+        exchange_timestamp: data.uint64(Number),
+        last_traded_price: divisor(data.uint32(Number), 100)
     };
 }
 
@@ -269,21 +270,21 @@ function QUOTE(buf) {
     const data = parser.parse(buf);
     
     return {
-        subscription_mode: data.uint8(formatter=Number),
-        exchange_type: data.uint8(formatter=Number),
+        subscription_mode: data.uint8(Number),
+        exchange_type: data.uint8(Number),
         token: data.token(new Uint8Array(buf.slice(2, 27))),
-        sequence_number: data.uint64(formatter=Number),
-        exchange_timestamp: data.uint64(formatter=Number),
-        last_traded_price: divisor(data.uint64(formatter=Number), 100),
-        last_traded_quantity: data.uint64(formatter=Number),
-        avg_traded_price: divisor(data.uint64(formatter=Number),100),
-        vol_traded: data.uint64(formatter=Number),
-        total_buy_quantity: data.double(formatter=Number),
-        total_sell_quantity: data.double(formatter=Number), 
-        open_price_day: divisor(data.uint64(formatter=Number),100),
-        high_price_day: divisor(data.uint64(formatter=Number),100),
-        low_price_day: divisor(data.uint64(formatter=Number),100),
-        close_price: divisor(data.uint64(formatter=Number),100)
+        sequence_number: data.uint64(Number),
+        exchange_timestamp: data.uint64(Number),
+        last_traded_price: divisor(data.uint64(Number), 100),
+        last_traded_quantity: data.uint64(Number),
+        avg_traded_price: divisor(data.uint64(Number),100),
+        vol_traded: data.uint64(Number),
+        total_buy_quantity: data.double(Number),
+        total_sell_quantity: data.double(Number), 
+        open_price_day: divisor(data.uint64(Number),100),
+        high_price_day: divisor(data.uint64(Number),100),
+        low_price_day: divisor(data.uint64(Number),100),
+        close_price: divisor(data.uint64(Number),100)
     };
 }
 
@@ -297,40 +298,40 @@ function SNAP_QUOTE(buf) {
         const bestFiveArray = [];
         for(let i = 0; i < 5; i++) {
             bestFiveArray.push({
-                flag: data.uint16(formatter=Number),
-                quantity: data.uint64(formatter=Number),
-                price: divisor(data.uint64(formatter=Number),100),
-                no_of_orders: data.uint16(formatter=Number)
+                flag: data.uint16(Number),
+                quantity: data.uint64(Number),
+                price: divisor(data.uint64(Number),100),
+                no_of_orders: data.uint16(Number)
             });
         }
         return bestFiveArray;
     };
 
     let res = {
-        subscription_mode: data.uint8(formatter=Number),
-        exchange_type: data.uint8(formatter=Number),
+        subscription_mode: data.uint8(Number),
+        exchange_type: data.uint8(Number),
         token: data.token(new Uint8Array(buf.slice(2, 27))),
-        sequence_number: data.uint64(formatter=Number),
-        exchange_timestamp: data.uint64(formatter=Number),
-        last_traded_price: divisor(data.uint64(formatter=Number),100),
-        last_traded_quantity: data.uint64(formatter=Number),
-        avg_traded_price: divisor(data.uint64(formatter=Number),100),
-        vol_traded: data.uint64(formatter=Number),
+        sequence_number: data.uint64(Number),
+        exchange_timestamp: data.uint64(Number),
+        last_traded_price: divisor(data.uint64(Number),100),
+        last_traded_quantity: data.uint64(Number),
+        avg_traded_price: divisor(data.uint64(Number),100),
+        vol_traded: data.uint64(Number),
         total_buy_quantity: data.double(),
         total_sell_quantity: data.double(),
-        open_price_day: divisor(data.uint64(formatter=Number),100),
-        high_price_day: divisor(data.uint64(formatter=Number),100),
-        low_price_day: divisor(data.uint64(formatter=Number),100),
-        close_price: divisor(data.uint64(formatter=Number),100),
-        last_traded_timestamp: data.uint64(formatter=Number),
-        open_interest: data.uint64(formatter=Number),
+        open_price_day: divisor(data.uint64(Number),100),
+        high_price_day: divisor(data.uint64(Number),100),
+        low_price_day: divisor(data.uint64(Number),100),
+        close_price: divisor(data.uint64(Number),100),
+        last_traded_timestamp: data.uint64(Number),
+        open_interest: data.uint64(Number),
         open_interest_change: data.double(),
         best_5_buy_data: parseBestFiveData(),
         best_5_sell_data: parseBestFiveData(),
-        upper_circuit: divisor(data.uint64(formatter=Number),100),
-        lower_circuit: divisor(data.uint64(formatter=Number),100),
-        fiftytwo_week_high: divisor(data.uint64(formatter=Number),100),
-        fiftytwo_week_low: divisor(data.uint64(formatter=Number),100)
+        upper_circuit: divisor(data.uint64(Number),100),
+        lower_circuit: divisor(data.uint64(Number),100),
+        fiftytwo_week_high: divisor(data.uint64(Number),100),
+        fiftytwo_week_low: divisor(data.uint64(Number),100)
     };
     return res
 }
@@ -344,20 +345,20 @@ function DEPTH(buf) {
         const depthArray = [];
         for(let i = 0; i < 20; i++) {
             depthArray.push({
-                quantity: data.uint32(formatter=Number),
-                price: divisor(data.uint32(formatter=Number),100),
-                no_of_orders: data.uint16(formatter=Number)
+                quantity: data.uint32(Number),
+                price: divisor(data.uint32(Number),100),
+                no_of_orders: data.uint16(Number)
             });
         }
         return depthArray;
     };
 
     return {
-        subscription_mode: data.uint8(formatter=Number),
-        exchange_type: data.uint8(formatter=Number),
+        subscription_mode: data.uint8(Number),
+        exchange_type: data.uint8(Number),
         token: data.token(new Uint8Array(buf.slice(2, 27))),
-        exchange_timestamp: data.uint64(formatter=Number),
-        packet_received_time: data.uint64(formatter=Number),
+        exchange_timestamp: data.uint64(Number),
+        packet_received_time: data.uint64(Number),
         depth_twenty_buy_data: parseDepthTwentyData(),
         depth_twenty_sell_data: parseDepthTwentyData()
     };
@@ -384,10 +385,3 @@ function setResponse(buf, result) {
     }
 }
 
-let angel_credentials = {}
-function populateTokens(){
-    
-    let smart_api = new SmartAPI({
-        api_key: ANGEL_API_KEY
-    });    
-}

@@ -1,5 +1,14 @@
-let ANGEL_ONE = null
+import { AngelConnect } from "./angel_connect.js";
+import * as OTPAuth from "otpauth";
 
+let ANGEL_ONE = null
+let ANGEL_TOTP_SECRET
+let ANGEL_USERNAME
+let ANGEL_PASSWORD
+let ANGEL_API_KEY
+let credentials = {
+
+}
 function onLoginError(ex){
     let attempt = document.getElementById('attempt').value
     if(attempt && attempt > 3){
@@ -34,7 +43,7 @@ function generateOtp(){
 function loadAngels() {
     
     if (isOneTimeSetUpDone()) {
-        ANGEL_ONE = new SmartApi({
+        ANGEL_ONE = new AngelConnect({
             api_key: ANGEL_API_KEY,
             client_code: ANGEL_USERNAME,
             totp: generateOtp(),
@@ -49,7 +58,7 @@ function saveCredentials() {
     ANGEL_PASSWORD = document.getElementById('password').value;
     ANGEL_API_KEY = document.getElementById('apiKey').value;
     ANGEL_TOTP_SECRET = document.getElementById('totpSecret').value;
-    ANGEL_ONE = new SmartApi({
+    ANGEL_ONE = new AngelConnect({
         api_key: ANGEL_API_KEY,
         client_code: ANGEL_USERNAME,
         totp: generateOtp(),
@@ -66,14 +75,14 @@ function isOneTimeSetUpDone(){
     return !(!ANGEL_USERNAME || !ANGEL_PASSWORD || !ANGEL_API_KEY || !ANGEL_TOTP_SECRET) 
 }
 
-function isUserAlredyLoggedIn(){
-    const today = new Date();
-    const todayEightAM = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 8, 0, 0);
-    let credentials = localStorage.getItem('angelCredentials');
-    let lastTokenTime = localStorage.getItem('lastTokenTime');
+// function isUserAlredyLoggedIn(){
+//     const today = new Date();
+//     const todayEightAM = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 8, 0, 0);
+//     let credentials = localStorage.getItem('angelCredentials');
+//     let lastTokenTime = localStorage.getItem('lastTokenTime');
 
-    return (credentials && lastTokenTime && new Date(lastTokenTime) > todayEightAM && Object.keys(JSON.parse(credentials)).length > 0)
-}
+//     return (credentials && lastTokenTime && new Date(lastTokenTime) > todayEightAM && Object.keys(JSON.parse(credentials)).length > 0)
+// }
 
 function loginUser(saveLoginDetails = false){
     console.log("New token - Angel ", saveLoginDetails)
@@ -109,3 +118,6 @@ function loginUser(saveLoginDetails = false){
 
 document.addEventListener('DOMContentLoaded', loadAngels)
 document.getElementById('connect')?.addEventListener('click', saveCredentials)
+
+export const getCredentials = () => credentials
+export const getConnector = () => ANGEL_ONE

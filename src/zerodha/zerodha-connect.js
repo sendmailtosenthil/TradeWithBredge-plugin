@@ -1,4 +1,13 @@
-function placeCalendarOrder(buyOrder, sellOrder, callback) {
+import { getCookieInfo } from "./zerodha-login";
+let cookie_info
+
+function loadCookie(){
+    cookie_info = getCookieInfo();
+    console.log("Connect Cookie Info : ", cookie_info?.user_id);
+}
+document.addEventListener('zerodha-login-success', loadCookie);
+
+export function placeCalendarOrder(buyOrder, sellOrder, callback) {
     // Make parallel API calls for buyOrder and sellOrder
     Promise.all([placeOrder(buyOrder), placeOrder(sellOrder)])
     .then(async ([buyResponse, sellResponse]) => {

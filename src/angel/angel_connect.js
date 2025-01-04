@@ -1,6 +1,8 @@
 'use strict';
+import {ANGEL_API} from './angel_api.js'
+import axios from 'axios';
 
-var SmartApi = function(params) {
+export function AngelConnect(params) {
 	var self = this;
 
 	self.totp = params.totp;
