@@ -230,82 +230,83 @@ function updatePrices(key, buyPrice, sellPrice){
     rowDoc.cells[indexes['status']].textContent = 'Running'
 }
 
-function placeOrder(row, rowId) {
-    if(!row.orderFlag){
-        console.log('Order not placed for ', row.rowId);
-        return
-    }
-    console.log('Placing order ', JSON.stringify(row))
-    const rowDoc = document.getElementById(rowId)
-    let orders = []
-    ANGEL_ONE.placeOrder({
+function placeOrder(order){
+    return ANGEL_ONE.placeOrder({
         "variety":"NORMAL",
-        "tradingsymbol":row.buyScript,
-        "symboltoken":String(row.buyToken),
-        "transactiontype":"BUY",
+        "tradingsymbol":order.tradingsymbol,
+        "symboltoken":String(order.token),
+        "transactiontype":order.transactiontype,
         "exchange":"NFO",
         "ordertype":"MARKET",
         "producttype":"CARRYFORWARD",
         "duration":"DAY",
-        "quantity": String(row.quantity)
-    }).then(data => {
-        console.log("Buy success", data)
-        rowDoc.cells[indexes['status']].textContent = ' Buy '+ data.message + ' order id '+ data?.data?.orderid
-        if(data.data.orderid){
-            orders.push(data.data.uniqueorderid)
-            ANGEL_ONE.placeOrder({
-                "variety":"NORMAL",
-                "tradingsymbol":row.sellScript,
-                "symboltoken":String(row.sellToken),
-                "transactiontype":"SELL",
-                "exchange":"NFO",
-                "ordertype":"MARKET",
-                "producttype":"CARRYFORWARD",
-                "duration":"DAY",
-                "quantity": String(row.quantity)
-            }).then(sellData => {
-                console.log("Sell success", sellData)
-                rowDoc.cells[indexes['status']].textContent = rowDoc.cells[indexes['status']].textContent + ' Sell '+ sellData?.message + ' order '+ sellData?.data?.orderid + ' '
-                if(sellData.data.orderid){
-                    orders.push(sellData.data.uniqueorderid)
-                    getOrderBook(orders, rowDoc)
-                } else {
-                    rowDoc.style.backgroundColor = '#FFC300'
-                }
-            }).catch(exe => {
-                console.log("Sell Failed ", exe)
-                rowDoc.cells[indexes['status']].textContent = rowDoc.cells[indexes['status']].textContent + ' Sell Failed '+exe
-            })
-        } else {
-            getOrderBook(orders, rowDoc)
-            rowDoc.style.backgroundColor = '#FF7F7F'
-        }
-    }).catch(ex => {
-        console.log("Buy Failed ", ex)
-        rowDoc.cells[indexes['status']].textContent = 'Buy Failed '+ ex
+        "quantity": String(order.quantity)
     })
-    
 }
 
-function getOrderBook(orders, rowDoc){
-    console.log("Given orders ", orders)
-    ANGEL_ONE.getOrderBook().then(fetchedOrders => {
-        console.log("Fetched orders ", fetchedOrders)
-        let executedOrders = fetchedOrders.data.filter(o => orders.includes(o.uniqueorderid))
-        if(orders.length != executedOrders.length){
-            rowDoc.cells[indexes['status']].textContent = rowDoc.cells[indexes['status']].textContent + 'Missing orders '+ orders
-            rowDoc.style.backgroundColor = '#FF7F7F';
+function parseResponse(resp){
+    let result = resp.result
+    if(resp.status == 'fulfilled'){
+        let angelResp = resp.value
+        console.log('Parse Resp Inside', angelResp)
+        result.msg += resp.ordertype + ' '
+        if(angelResp.message == 'SUCCESS'){
+            result.msg += 'Placed' + ' '
+        } else {
+            result.msg += angelResp.message + ' ' + angelResp.errorcode + ' '
+            result.success = false
         }
-        executedOrders.forEach(o => {
-            if(o.orderstatus == 'rejected'){
-                rowDoc.cells[indexes['status']].textContent = rowDoc.cells[indexes['status']].textContent + `[${o.transactiontype}]`+ o.text + ' '
-                rowDoc.style.backgroundColor = '#FF7F7F';
-            } else {
-                rowDoc.cells[indexes['status']].textContent = rowDoc.cells[indexes['status']].textContent +  o.transactiontype + '::'+ o.tradingsymbol + '::@' +o.price +' '+o.text + ' '
-            }
-            
-        })
-    }).catch(err => rowDoc.cells[indexes['status']].textContent = 'Unable to get Order book '+ err)
+
+        if(angelResp.status && angelResp.data?.orderid){
+            resp.orders.push(angelResp.data.orderid)
+        } else {
+            result.success = false
+        }
+    }
+    console.log('Parse Resp return', result, resp.orders)
+    return {result, orders:resp.orders}
+}
+
+async function placeCalenderOrder(buyOrder, sellOrder) {
+    console.log('Placing order ', JSON.stringify(buyOrder), JSON.stringify(sellOrder))  
+    let result = {msg : '', success: true}
+    let reponses = await Promise.allSettled([
+        placeOrder(buyOrder),
+        placeOrder(sellOrder),
+    ]).catch(ex => {
+        console.log("Orders failed ", ex)
+        return {msg: ex.message, success: false}
+    })
+    console.log("Response ", reponses)
+    let resp = parseResponse({...reponses[0], ordertype: 'BUY', result:result, orders: []}) 
+    resp = parseResponse({...reponses[1], ordertype: 'SELL', result:resp.result, orders: resp.orders})
+       
+    return await getOrderBook(resp.orders, resp.result)
+}
+
+async function getOrderBook(orders, result){
+    //console.log("Given orders ", orders)
+    let fetchedOrders = await ANGEL_ONE.getOrderBook().catch(err => {
+        return {
+            msg:result.msg + ' Unable to get Order book '+err, 
+            success: false
+        }
+    })
+    //console.log("Fetched orders ", fetchedOrders)
+    let executedOrders = fetchedOrders.data.filter(o => orders.includes(o.orderid))
+    if(orders.length != executedOrders.length){
+        result.msg = result.msg + ' Missing orders '+ orders + ' ' + executedOrders + ' '
+        result.success = false
+    }
+    executedOrders.forEach(o => {
+        if(o.orderstatus == 'rejected' || o.orderstatus == 'cancelled'){
+            result.msg = result.msg + `[${o.transactiontype} Status] :`+ o.status + ' ' + o.text + ' '
+            result.success = false
+        } else {
+            result.msg = result.msg +  o.transactiontype + '::'+ o.tradingsymbol + '::@' +o.price +' '+o.text + ' '
+        }
+    })
+    return result;
 }
 
 function isEligible(premiumLess, threshold, difference){
@@ -332,11 +333,33 @@ function isThresholdCrossed() {
                 toBeDeletedKeys.push(key)
                 const alertSound = document.getElementById(`alertSound`);
                 alertSound.play();
-                placeOrder(leg, key)
                 const rowDoc = document.getElementById(key);
                 // Add this line to change background color
-                rowDoc.cells[indexes['status']].textContent = 'Completed'
+                rowDoc.cells[indexes['status']].textContent = 'Triggered'
                 rowDoc.style.backgroundColor = '#90EE90';
+
+                if(leg.orderFlag){
+                    placeCalenderOrder({
+                        tradingsymbol: leg.buyScript,
+                        token: leg.buyToken,
+                        quantity: leg.quantity,
+                        transactiontype: 'BUY'
+                    }, {
+                        tradingsymbol: leg.sellScript,
+                        token: leg.sellToken,
+                        quantity: leg.quantity,
+                        transactiontype: 'SELL'
+                    }).then(result => {
+                        console.log("Order result ", result)
+                        if(result.success){
+                            rowDoc.cells[indexes['status']].textContent = 'Completed '+ result.msg 
+                            rowDoc.style.backgroundColor = '#90EE90';
+                        } else {
+                            rowDoc.cells[indexes['status']].textContent = result.msg
+                            rowDoc.style.backgroundColor = '#FF7F7F';
+                        }
+                    })
+                }
             }
         }
     })
