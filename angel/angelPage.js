@@ -29,6 +29,9 @@ function removeCache(rowId){
                 "tokens": toBeUnsubscribeTokens
             })
         } 
+    }
+    if(Object.keys(cache).length == 0){
+        ticker.disconnect()
     }   
 }
 
@@ -199,8 +202,7 @@ function addNewRow() {
     })
 }
 
-function initTicker(event){
-    let credentials = event.detail.credentials
+function initTicker(credentials){
     ticker = new WebSocketV2({
         clientcode: credentials.ANGEL_USERNAME,
         jwttoken: credentials.jwtToken,
@@ -211,6 +213,11 @@ function initTicker(event){
     ticker.on("error", function(e) {
       console.log("Error", e);
     });
+}
+
+function postLoginSuccess(event){
+    let credentials = event.detail.credentials
+    initTicker(credentials)
     document.getElementById('addFormButton').addEventListener('click', addNewRow);
     // const calendarForm = document.getElementById('calendar-form')
     document.getElementById('monitoring-form').style.display = 'block';
@@ -452,4 +459,4 @@ document.getElementById('baseInstrument').addEventListener('change', function() 
     });
 });
 
-document.addEventListener('login-success', initTicker);
+document.addEventListener('login-success', postLoginSuccess);

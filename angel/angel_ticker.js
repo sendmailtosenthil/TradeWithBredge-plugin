@@ -53,7 +53,9 @@ let WebSocketV2 = function (params) {
 							});
 						}
 						reset = setInterval(function () {
-							ws.send('ping');
+							if(ws?.readyState === open){
+								ws.send('ping');
+							}
 						}, ping_Interval);
 						resolve();
 					};
@@ -221,6 +223,16 @@ let WebSocketV2 = function (params) {
 			if (reconnectionType === 'exponential') {
 				reconnectionTime = delTime * multiplier;
 				expMultiplier = multiplier
+			}
+		}
+		this.disconnect = function(){
+			console.log('In disconnect...')
+			subscribeData = []
+			if(ws?.readyState === open){
+				this.isReconnect = false
+				clearInterval(reset);
+                clearInterval(stopInterval);
+				ws.close()
 			}
 		}
 	} catch (error) {
