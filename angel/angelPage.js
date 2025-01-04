@@ -17,6 +17,9 @@ function removeCache(rowId){
     if(cache[rowId]){
         tokenCounter[cache[rowId].buyToken] = tokenCounter[cache[rowId].buyToken] - 1;
         tokenCounter[cache[rowId].sellToken] = tokenCounter[cache[rowId].sellToken] - 1;
+        if(cache[rowId].orderFlag){
+            orderNumber--;
+        }
         delete cache[rowId];
         let toBeUnsubscribeTokens = Object.keys(tokenCounter).filter(token => tokenCounter[token] == 0)
         console.log('Unsubscribe ', toBeUnsubscribeTokens);
@@ -52,13 +55,6 @@ function monitorRow(row){
     tickerConnect(subscribe, [row.buyToken, row.sellToken], row.rowId)
 }
 
-function isNotValid(){
-    if(orderNumber >= maxOrder){
-        alert('You cannot make more than 2 orders at same time')
-        return true;
-    }
-    return false;
-}
 
 function cancelRow(rowId) {
     const row = document.getElementById(rowId);
@@ -72,6 +68,11 @@ function cancelRow(rowId) {
 }
 
 function doValidation(){
+    const orderPlz = document.getElementById('orderPlz').checked;
+    if(orderNumber >= maxOrder && orderPlz){
+        alert('You cannot make more than 2 running orders at same time')
+        return false;
+    }
     const baseInstrument = document.getElementById('baseInstrument').value;
     if(baseInstrument == ''){
         alert('Please enter base instrument')
@@ -136,7 +137,7 @@ function doValidation(){
 }
 
 function addNewRow() {
-    if(isNotValid() || !doValidation()){
+    if(!doValidation()){
         return
     }
     const buyScript = document.getElementById('buyScript').value;
@@ -188,6 +189,9 @@ function addNewRow() {
     document.getElementById('orderPlz').checked = false;
     
     rowNumber++;
+    if(orderFlag){
+        orderNumber++
+    }
     monitorRow({
         buyToken: getTokenFromSymbol(baseInstrument, buyExpiry, buyScript),
         sellToken: getTokenFromSymbol(baseInstrument, sellExpiry, sellScript),
@@ -460,3 +464,30 @@ document.getElementById('baseInstrument').addEventListener('change', function() 
 });
 
 document.addEventListener('login-success', postLoginSuccess);
+
+function scheduleDisconnectAt345PM() {
+    const now = new Date();
+    const targetTime = new Date();
+    targetTime.setHours(15, 45, 0);
+    //targetTime.setHours(7, 26, 0); 
+
+    if (now > targetTime) {
+        return
+    }
+
+    const timeUntilTarget = targetTime - now;
+    setTimeout(() => {
+        console.log('Clearing for the day')
+        if(ticker.isAlreadyConnected()){
+            ticker.disconnect()
+        }
+        Object.keys(cache).forEach(key => delete cache[key])
+        Object.keys(tokenCounter).forEach(key => delete tokenCounter[key])
+        Object.keys(tokenPriceCache).forEach(key => delete tokenPriceCache[key]) 
+        rowNumber = 1
+        orderNumber = 0
+        showOverlay()
+    }, timeUntilTarget);
+}
+
+scheduleDisconnectAt345PM()

@@ -1,5 +1,7 @@
 let rowNumber = 1;
 let ticker = null;
+let orderNumber = 0;
+const maxOrder = 2 
 const cookie_info = {
     user_id: null,
     enctoken: null,
@@ -42,8 +44,14 @@ chrome.runtime.sendMessage({action: 'getCookies'}, (response) => {
     //console.log(cookie_info);
     return true;
 });
+
 function doValidation(){
-  
+  const orderPlz = document.getElementById('orderPlz').checked;
+  if(orderNumber >= 2 && orderPlz){
+      alert('You cannot make more than 2 running orders per day')
+      return false
+  }
+
   const buyScript = document.getElementById('buyScript').value;
   if(buyScript == ''){
       alert('Please enter Buy script')
@@ -230,6 +238,9 @@ function removeCache(rowId){
   if(zerodhaCache[rowId]){
     tokenCounter[zerodhaCache[rowId].buyToken] = tokenCounter[zerodhaCache[rowId].buyToken] - 1;
     tokenCounter[zerodhaCache[rowId].sellToken] = tokenCounter[zerodhaCache[rowId].sellToken] - 1;
+    if(zerodhaCache[rowId].orderFlag){
+        orderNumber--;
+    }
     delete zerodhaCache[rowId];
     let toBeUnsubscribeTokens = Object.keys(tokenCounter).filter(token => tokenCounter[token] == 0)
     console.log('Unsubscribe ', toBeUnsubscribeTokens);
@@ -302,6 +313,10 @@ function addNewRow() {
     document.getElementById('premiumLess').value = '';
     document.getElementById('orderPlz').checked = false;
     rowNumber++;
+    if(orderFlag){
+        orderNumber++
+        console.log('Order enabled ', orderNumber)
+    }
     
     monitorRow({
         buyScript: buyScript,
@@ -319,6 +334,32 @@ function addNewRow() {
   document.addEventListener('DOMContentLoaded', loadUser);
   document.getElementById('addFormButton').addEventListener('click', addNewRow);
 
+function scheduleDisconnectAt345PM() {
+    const now = new Date();
+    const targetTime = new Date();
+    targetTime.setHours(15, 45, 0);
+    //targetTime.setHours(7, 26, 0); 
+
+    if (now > targetTime) {
+        return
+    }
+
+    const timeUntilTarget = targetTime - now;
+    setTimeout(() => {
+        console.log('Clearing for the day')
+        if(ticker.isAlreadyConnected()){
+            ticker.disconnect()
+        }
+        Object.keys(zerodhaCache).forEach(key => delete cache[key])
+        Object.keys(tokenCounter).forEach(key => delete tokenCounter[key])
+        Object.keys(tokenPricesCache).forEach(key => delete tokenPricesCache[key]) 
+        rowNumber = 1
+        orderNumber = 0
+        showOverlay()
+    }, timeUntilTarget);
+}
+
+scheduleDisconnectAt345PM()
 
   class MockTicker {
     constructor(params) {
