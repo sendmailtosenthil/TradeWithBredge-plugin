@@ -7,8 +7,8 @@ function placeCalendarOrder(buyOrder, sellOrder, callback) {
         buyResponse = await buyResponse.json()
         sellResponse = await sellResponse.json();
         // Process the results of both orders
-        //console.log('Buy Order Response:', buyResponse);
-        //console.log('Sell Order Response:', sellResponse);
+        console.log('Buy Order Response:', buyResponse);
+        console.log('Sell Order Response:', sellResponse);
 
         let orders = []
         // Additional processing can be done here
@@ -39,9 +39,10 @@ function placeCalendarOrder(buyOrder, sellOrder, callback) {
 async function orderInfoByIds(orders) {
     let result = ''
     let response = await (await getOrders()).json()
+    console.log(response)
     const fetchedOrders = response.data;
-    const executedOrders = fetchedOrders.filter(order => orders.includes(order.order_id));
-    executedOrders.forEach(o => result = result + `[${o.transaction_type} - ${o.status}] @ ${o.price}`)
+    const executedOrders = fetchedOrders?.filter(order => orders.includes(order.order_id));
+    executedOrders?.forEach(o => result = result + `[${o.transaction_type} - ${o.status}] @ ${o.price}`)
     return result
 }
 

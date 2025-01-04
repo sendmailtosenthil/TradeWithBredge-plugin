@@ -69,14 +69,14 @@ function doValidation(){
       alert('Please enter Quantity')
       return false;
   }
-  if(baseInstrument == 'NIFTY'){
+  if(buyScript.startsWith('NIFTY')){
       let isValidQty = parseInt(quantity) % 75;
       if(isValidQty != 0){
           alert('Please enter quantity in multiple of 75')
           return false;
       }
   }
-  if(baseInstrument == 'BANKNIFTY'){
+  if(buyScript.startsWith('BANKNIFTY')){
       let isValidQty = parseInt(quantity) % 30;
       if(isValidQty != 0){
           alert('Please enter quantity in multiple of 30')

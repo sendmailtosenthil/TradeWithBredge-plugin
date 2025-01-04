@@ -1,5 +1,5 @@
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  console.log(`=======BG Request =======> ${JSON.stringify(request)} ${JSON.stringify(sender)}`);
+  //console.log(`=======BG Request =======> ${JSON.stringify(request)} ${JSON.stringify(sender)}`);
   if (request.action === 'getCookies') {
     chrome.cookies.getAll({domain: 'kite.zerodha.com'}, (cookies) => {
       const cookieData = {
@@ -13,8 +13,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'GET_LOCAL_STORAGE') {
     // Handle the local storage data
     const storageData = request.data;
-    console.log('BG Local Storage Data:', storageData);
-    console.log('Local Storage Data json:', JSON.stringify(storageData));
+    //console.log('BG Local Storage Data:', storageData);
+    //console.log('Local Storage Data json:', JSON.stringify(storageData));
     sendResponse(storageData);
     // Do something with the data
     return true;
