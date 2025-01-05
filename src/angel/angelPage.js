@@ -3,6 +3,17 @@ import { getNiftyExpiry, getBankNiftyExpiry, getBankNiftySymbols, getNiftySymbol
 import { ACTION, MODE, EXCHANGES } from './angel_constants.js';
 import { getConnector } from './angel_login.js';
 const cache = {};
+const quantities = {
+    'NIFTY': [75, 150, 225],
+    'BANKNIFTY': [30, 60, 90]
+}
+const depths = {
+    '0': 'First',
+    '1': 'Second',
+    '2': 'Third',
+    '3': 'Fourth',
+    '4': 'Fifth'
+}
   
 const tokenPriceCache = {} 
 const tokenCounter = {}
@@ -10,11 +21,11 @@ let rowNumber = 1;
 let maxOrder = 2;
 let orderNumber = 0;
 let indexes = {
-    difference: 5,
-    buyPrice: 6,
-    sellPrice: 7,
-    status: 8,
-    action: 10
+    difference: 11,
+    buyPrice: 9,
+    sellPrice: 10,
+    status: 12,
+    action: 13
 }
 let ticker
 
@@ -64,7 +75,7 @@ function monitorRow(row){
 function cancelRow(rowId) {
     const row = document.getElementById(rowId);
     if (row && cache[rowId]) {
-        row.cells[indexes['status']].textContent = 'Cancelled';
+        row.cells[indexes['status']].textContent = '🛑';
         row.style.backgroundColor = '#FFFFC5';
         row.cells[indexes['action']].textContent = '';
     }
@@ -73,9 +84,9 @@ function cancelRow(rowId) {
 }
 
 function doValidation(){
-    const orderPlz = document.getElementById('orderPlz').checked;
-    if(orderNumber >= maxOrder && orderPlz){
-        alert('You cannot make more than 2 running orders at same time')
+    const action = document.getElementById('action').value;
+    if(orderNumber >= maxOrder && action == 'order'){
+        alert('You cannot make more than 2 running 🏃 orders at same time')
         return false;
     }
     const baseInstrument = document.getElementById('baseInstrument').value;
@@ -83,46 +94,22 @@ function doValidation(){
         alert('Please enter base instrument')
         return false;
     }
-    const buyScript = document.getElementById('buyScript').value;
-    if(buyScript == ''){
-        alert('Please enter Buy script')
+    const strike = document.getElementById('strike').value;
+    if(strike == ''){
+        alert('Please enter strike value')
         return false;
     }
-    const sellScript = document.getElementById('sellScript').value;
-    if(sellScript == ''){
-        alert('Please enter Sell script')
-        return false;
-    }
-    const depth = document.getElementById('depth').value;
-    if(depth == ''){
-        alert('Please enter depth')
-        return false;
-    }
-    const threshold = document.getElementById('threshold').value;
-    if(threshold == ''){
-        alert('Please enter premium difference')
+    const optionType = document.getElementById('optionType').value;
+    if(optionType == ''){
+        alert('Please select option type')
         return false;
     }
     const quantity = document.getElementById('quantity').value;
     if(quantity == ''){
-        alert('Please enter Quantity')
+        alert('Please select Quantity')
         return false;
     }
-    if(baseInstrument == 'NIFTY'){
-        let isValidQty = parseInt(quantity) % 75;
-        if(isValidQty != 0){
-            alert('Please enter quantity in multiple of 75')
-            return false;
-        }
-    }
-    if(baseInstrument == 'BANKNIFTY'){
-        let isValidQty = parseInt(quantity) % 30;
-        if(isValidQty != 0){
-            alert('Please enter quantity in multiple of 30')
-            return false;
-        }
-    }
-    
+
     let buyExpiry = document.getElementById(`buyExpiry`).value;
     if(buyExpiry == ''){
         alert('Please enter Buy Expiry')
@@ -138,41 +125,67 @@ function doValidation(){
         alert('Please enter Less Than or More Than premium')
         return false;
     }
+
+    const depth = document.getElementById('depth').value;
+    if(depth == ''){
+        alert('Please select correct depth')
+        return false;
+    }
+    const threshold = document.getElementById('threshold').value;
+    if(threshold == ''){
+        alert('Please enter premium difference')
+        return false;
+    }
+    const orderType = document.getElementById('orderType')?.value;
+    if(action == 'order' && orderType == ''){
+        alert('Please select appropriate order type')
+        return false;
+    }
     return true;
+}
+
+function capitalizeFirstLetter(val) {
+    return String(val).charAt(0).toUpperCase() + String(val).slice(1);
 }
 
 function addNewRow() {
     if(!doValidation()){
         return
     }
-    const buyScript = document.getElementById('buyScript').value;
-    const sellScript = document.getElementById('sellScript').value;
-    const depth = document.getElementById('depth').value;
-    const threshold = document.getElementById('threshold').value;
-    const premiumLess = document.getElementById('premiumLess').value;
-    const quantity = document.getElementById('quantity').value;
-    const orderFlag = document.getElementById('orderPlz').checked;
+    const orderFlag = document.getElementById('action').value == 'order';
     const baseInstrument = document.getElementById('baseInstrument').value;
-    let buyExpiry = document.getElementById(`buyExpiry`).value;
-    buyExpiry = buyExpiry.substring(0, 5) + buyExpiry.substring(7)
+    const strike = document.getElementById('strike').value;
+    const optionType = document.getElementById('optionType').value;
+    const quantity = document.getElementById('quantity').value;
     let sellExpiry = document.getElementById(`sellExpiry`).value;
     sellExpiry = sellExpiry.substring(0, 5) + sellExpiry.substring(7)
+    let buyExpiry = document.getElementById(`buyExpiry`).value;
+    buyExpiry = buyExpiry.substring(0, 5) + buyExpiry.substring(7)
+    const premiumLess = document.getElementById('premiumLess').value;
+    const threshold = document.getElementById('threshold').value;
+    const depth = document.getElementById('depth').value;
+    const orderType = document.getElementById('orderType')?.value;
+    const buyScript = `${strike}${optionType}`;
+    const sellScript = buyScript
     
     const tbody = document.getElementById('alertsTableBody');
     const row = tbody.insertRow();
     row.id = 'row-' + rowNumber;
     
     const cells = [
-      {value: `${baseInstrument}${buyExpiry}${buyScript}`},
-      {value: `${baseInstrument}${sellExpiry}${sellScript}`},
+      {value: `${orderFlag ? '🚚' : '🔔'}`},
+      {value: `${capitalizeFirstLetter(baseInstrument.toLowerCase())}`},
+      {value: strike},
+      {value: `${optionType == 'CE'? 'Call': 'Put'}`},
       {value: quantity},
-      {value: depth},
-      {value: `${(premiumLess == 'lt' ? '< ' : '> ') + threshold}`},
+      {value: sellExpiry},
+      {value: buyExpiry},
+      {value: `${depths[depth]}`},
+      {value: `${orderType ? capitalizeFirstLetter(orderType.toLowerCase()) : '-'}`},
       {value: '0'},
       {value: '0'},
       {value: '0'},
-      {value: 'Yet to Start'},
-      {value: orderFlag}
+      {value: '⭕'}
     ];
 
     cells.forEach(({value}) => {
@@ -183,15 +196,12 @@ function addNewRow() {
     // Add a Cancel button
     const cancelCell = row.insertCell();
     const cancelButton = document.createElement('button');
-    cancelButton.textContent = 'Cancel';
+    cancelButton.textContent = '✘';
     cancelButton.addEventListener('click', () => cancelRow(row.id));
     cancelCell.appendChild(cancelButton);
 
     // Clear form inputs
-    document.getElementById('depth').value = '3';
-    document.getElementById('threshold').value = '';
-    document.getElementById('premiumLess').value = '';
-    document.getElementById('orderPlz').checked = false;
+    clearForm()
     
     rowNumber++;
     if(orderFlag){
@@ -207,8 +217,20 @@ function addNewRow() {
         orderFlag: orderFlag,
         buyScript: `${baseInstrument}${buyExpiry}${buyScript}`,
         sellScript: `${baseInstrument}${sellExpiry}${sellScript}`,
-        premiumLess: premiumLess == 'lt' ? true : false
+        premiumLess: premiumLess == 'lt' ? true : false,
+        orderType: orderType.toUpperCase(),
     })
+}
+
+function clearForm(){
+    const retain = document.getElementById('retain').checked;
+    if(retain){
+        document.getElementById('depth').value = '';
+        document.getElementById('threshold').value = '';
+        document.getElementById('premiumLess').value = '';
+        document.getElementById('action').value = '';
+        return
+    }
 }
 
 function initTicker(credentials){
@@ -231,19 +253,19 @@ function postLoginSuccess(event){
     // const calendarForm = document.getElementById('calendar-form')
     document.getElementById('monitoring-form').style.display = 'block';
     document.getElementById('alertsTable').style.display = 'block';
-    document.getElementById('status').style.display = 'block';
-    document.getElementById('status').textContent = 'Logged in as :' + credentials.ANGEL_USERNAME;
+    //document.getElementById('status').style.display = 'block';
+    //document.getElementById('status').textContent = 'Logged in as :' + credentials.ANGEL_USERNAME;
     const myEvent = new CustomEvent('calender-loaded', {"detail":{}});
     document.dispatchEvent(myEvent)
 }
 
-function updatePrices(key, buyPrice, sellPrice){
+function updatePrices(key, buyPrice, sellPrice, threshold, premiumLess){
     const rowDoc = document.getElementById(key);
     rowDoc.cells[indexes['buyPrice']].textContent = buyPrice;
     rowDoc.cells[indexes['sellPrice']].textContent = sellPrice;
     const difference = Number(Math.abs(buyPrice - sellPrice).toFixed(2));
-    rowDoc.cells[indexes['difference']].textContent = difference;
-    rowDoc.cells[indexes['status']].textContent = 'Running'
+    rowDoc.cells[indexes['difference']].textContent = `${premiumLess ? threshold +' < ' + difference: threshold +' > ' + difference}`;
+    rowDoc.cells[indexes['status']].textContent = '🏃'
 }
 
 function placeOrder(order){
@@ -339,8 +361,8 @@ function isThresholdCrossed() {
         const buyPrice = tokenPriceCache[leg.buyToken]?.sellPrices[leg.depth-1]?.price || 0;
         const sellPrice = tokenPriceCache[leg.sellToken]?.buyPrices[leg.depth-1]?.price || 0;
         if(buyPrice > 0 && sellPrice > 0) {
-            updatePrices(key, buyPrice, sellPrice)
             const threshold = leg.threshold;
+            updatePrices(key, buyPrice, sellPrice, threshold, leg.premiumLess);
             const difference = Math.abs(buyPrice - sellPrice);
             if(isEligible(leg.premiumLess, threshold, difference)) {
                 console.log("Difference is less than threshold ");
@@ -351,8 +373,8 @@ function isThresholdCrossed() {
                 alertSound.play();
                 const rowDoc = document.getElementById(key);
                 // Add this line to change background color
-                rowDoc.cells[indexes['status']].textContent = 'Triggered'
-                rowDoc.style.backgroundColor = '#90EE90';
+                rowDoc.cells[indexes['status']].textContent = '✔'
+                rowDoc.style.backgroundColor = '#D2F8D2';
 
                 if(leg.orderFlag){
                     placeCalenderOrder({
@@ -368,11 +390,11 @@ function isThresholdCrossed() {
                     }).then(result => {
                         console.log("Order result ", result)
                         if(result.success){
-                            rowDoc.cells[indexes['status']].textContent = 'Completed '+ result.msg 
-                            rowDoc.style.backgroundColor = '#90EE90';
+                            rowDoc.cells[indexes['status']].textContent = '✔ '+ result.msg 
+                            rowDoc.style.backgroundColor = '#D2F8D2';
                         } else {
-                            rowDoc.cells[indexes['status']].textContent = result.msg
-                            rowDoc.style.backgroundColor = '#FF7F7F';
+                            rowDoc.cells[indexes['status']].textContent = '❗'+result.msg
+                            rowDoc.style.backgroundColor = '#FBD9D3';
                         }
                     })
                 }
@@ -443,16 +465,26 @@ document.getElementById('baseInstrument').addEventListener('change', function() 
     const expiryValues = selectedInstrument === 'NIFTY' ? getNiftyExpiry() : getBankNiftyExpiry();
     const buyExpirySelect = document.getElementById("buyExpiry")
     const sellExpirySelect = document.getElementById("sellExpiry")
+    const quantitySelect = document.getElementById("quantity")
     // Clear existing options
     buyExpirySelect.innerHTML = '';
     sellExpirySelect.innerHTML = '';
+    quantitySelect.innerHTML = '';
 
     // Add default empty option
     const defaultOption = document.createElement('option');
     defaultOption.value = '';
-    defaultOption.textContent = 'Select Expiry';
+    defaultOption.textContent = 'Select';
     buyExpirySelect.appendChild(defaultOption.cloneNode(true));
-    sellExpirySelect.appendChild(defaultOption);
+    sellExpirySelect.appendChild(defaultOption.cloneNode(true));
+    quantitySelect.appendChild(defaultOption.cloneNode(true));
+
+    quantities[selectedInstrument].forEach(quantity => {
+        const qtyOption = document.createElement('option');
+        qtyOption.value = quantity;
+        qtyOption.textContent = quantity;
+        quantitySelect.appendChild(qtyOption);
+    });
 
     // Populate both dropdowns
     expiryValues.forEach(expiry => {
@@ -466,6 +498,15 @@ document.getElementById('baseInstrument').addEventListener('change', function() 
         sellOption.textContent = expiry;
         sellExpirySelect.appendChild(sellOption);
     });
+});
+
+document.getElementById('action').addEventListener('change', function() {
+    const action = document.getElementById('action').value
+    if(action =='alert' || action ==''){
+        document.getElementById('action-depth').style.display = 'none'
+    } else {
+        document.getElementById('action-depth').style.display = 'block'
+    }
 });
 
 document.addEventListener('login-success', postLoginSuccess);
