@@ -1,3 +1,4 @@
+import "./zerodha_script_downloader.js"
 import "../lib/config.js"
 import "./ticker.js"
 import "./zerodha-connect.js"

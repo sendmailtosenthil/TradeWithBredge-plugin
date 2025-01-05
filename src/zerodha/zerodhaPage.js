@@ -2,6 +2,8 @@ import { ENV } from "../lib/config.js"
 import { KiteTicker } from "./ticker.js"
 import { getCookieInfo } from "./zerodha-login.js"
 import { placeCalendarOrder } from "./zerodha-connect.js"
+import { getNiftyExpiry, getBankNiftyExpiry, getBankNiftySymbols, getNiftySymbols } from './zerodha_script_downloader.js';
+import { capitalizeFirstLetter } from "../lib/util.js";
 
 let rowNumber = 1;
 let ticker = null;
@@ -10,13 +12,49 @@ const maxOrder = 2
 let zerodhaCache = {}
 const tokenCounter = {}
 const tokenPricesCache = {};
+const quantities = {
+  'NIFTY': [75, 150, 225],
+  'BANKNIFTY': [30, 60, 90]
+}
+const depths = {
+  '0': 'First',
+  '1': 'Second',
+  '2': 'Third',
+  '3': 'Fourth',
+  '4': 'Fifth'
+}
+const MONTHS ={
+  'JAN': '1',
+  'FEB': '2',
+  'MAR': '3',
+  'APR': '4',
+  'MAY': '5',
+  'JUN': '6',
+  'JUL': '7',
+  'AUG': '8',
+  'SEP': '9',
+  'OCT': 'O',
+  'NOV': 'N',
+  'DEC': 'D',
+}
 
 let indexes = {
-  difference: 5,
-  buyPrice: 6,
-  sellPrice: 7,
-  status: 8,
-  action: 10
+  difference: 11,
+  buyPrice: 9,
+  sellPrice: 10,
+  status: 12,
+  action: 13
+}
+
+function clearForm(){
+  const retain = document.getElementById('retain').checked;
+  if(retain){
+      document.getElementById('depth').value = '';
+      document.getElementById('threshold').value = '';
+      document.getElementById('premiumLess').value = '';
+      document.getElementById('action').value = '';
+      return
+  }
 }
 
 function loadUser() {
@@ -46,75 +84,79 @@ function loadUser() {
           console.log("Connecting to Mock Ticker");
           ticker = new MockTicker({})
         }
-        document.getElementById('status').textContent = 'Logged in as :' + data.data.user_id
+        //document.getElementById('status').textContent = 'Logged in as :' + data.data.user_id
         const myEvent = new CustomEvent('calender-loaded', { "detail": {} });
         document.dispatchEvent(myEvent)
       })
       .catch(error => {
         console.log('Error : ', error);
-        document.getElementById('status').textContent = 'Reach to Telegram User @TradeWithBredge Error : ' + error;
+        //document.getElementById('status').textContent = 'Reach to Telegram User @TradeWithBredge Error : ' + error;
       });
   } else {
     console.log('No user id ', cookie_info.user_id);
   }
 }
 
-function doValidation() {
-  const orderPlz = document.getElementById('orderPlz').checked;
-  if (orderNumber >= 2 && orderPlz) {
-    alert('You cannot make more than 2 running orders per day')
-    return false
+function doValidation(){
+  const action = document.getElementById('action').value;
+  if(orderNumber >= maxOrder && action == 'order'){
+      alert('You cannot make more than 2 running 🏃 orders at same time')
+      return false;
   }
-
-  const buyScript = document.getElementById('buyScript').value;
-  if (buyScript == '') {
-    alert('Please enter Buy script')
-    return false;
+  const baseInstrument = document.getElementById('baseInstrument').value;
+  if(baseInstrument == ''){
+      alert('Please enter base instrument')
+      return false;
   }
-  const sellScript = document.getElementById('sellScript').value;
-  if (sellScript == '') {
-    alert('Please enter Sell script')
-    return false;
+  const strike = document.getElementById('strike').value;
+  if(strike == ''){
+      alert('Please enter strike value')
+      return false;
   }
-  const depth = document.getElementById('depth').value;
-  if (depth == '') {
-    alert('Please enter depth')
-    return false;
-  }
-  const threshold = document.getElementById('threshold').value;
-  if (threshold == '') {
-    alert('Please enter premium difference')
-    return false;
+  const optionType = document.getElementById('optionType').value;
+  if(optionType == ''){
+      alert('Please select option type')
+      return false;
   }
   const quantity = document.getElementById('quantity').value;
-  if (quantity == '') {
-    alert('Please enter Quantity')
-    return false;
-  }
-  if (buyScript.startsWith('NIFTY')) {
-    let isValidQty = parseInt(quantity) % 75;
-    if (isValidQty != 0) {
-      alert('Please enter quantity in multiple of 75')
+  if(action == 'order' && quantity == ''){
+      alert('Please select Quantity')
       return false;
-    }
-  }
-  if (buyScript.startsWith('BANKNIFTY')) {
-    let isValidQty = parseInt(quantity) % 30;
-    if (isValidQty != 0) {
-      alert('Please enter quantity in multiple of 30')
-      return false;
-    }
   }
 
+  let buyExpiry = document.getElementById(`buyExpiry`).value;
+  if(buyExpiry == ''){
+      alert('Please enter Buy Expiry')
+      return false;
+  }
+  let sellExpiry = document.getElementById(`sellExpiry`).value;
+  if(sellExpiry == ''){
+      alert('Please enter Sell Expiry')
+      return false;
+  }
   const premiumLess = document.getElementById('premiumLess').value;
-  if (premiumLess == '') {
-    alert('Please enter Less Than or More Than premium')
-    return false;
+  if(premiumLess == ''){
+      alert('Please enter Less Than or More Than premium')
+      return false;
+  }
+
+  const depth = document.getElementById('depth').value;
+  if(depth == ''){
+      alert('Please select correct depth')
+      return false;
+  }
+  const threshold = document.getElementById('threshold').value;
+  if(threshold == ''){
+      alert('Please enter premium difference')
+      return false;
+  }
+  const orderType = document.getElementById('orderType')?.value;
+  if(action == 'order' && orderType == ''){
+      alert('Please select appropriate order type')
+      return false;
   }
   return true;
 }
-
-
 
 function subscribe(tokens) {
   console.log("Connected :", tokens.length);
@@ -156,11 +198,15 @@ function calculateRowPrices() {
           placeCalendarOrder({
             'transactiontype': 'BUY',
             'quantity': row.quantity,
-            'tradingsymbol': row.buyScript
+            'tradingsymbol': row.buyScript,
+            'price': (Number(row.buyPrice) + 2).toFixed(2),
+            'ordertype': row.orderType,
           }, {
             'transactiontype': 'SELL',
             'quantity': row.quantity,
-            'tradingsymbol': row.sellScript
+            'tradingsymbol': row.sellScript,
+            'price': (Number(row.sellPrice) + 2).toFixed(2),
+            'ordertype': row.orderType,
           }, (txt, success) => {
             rowDoc.cells[indexes['status']].textContent = txt
             rowDoc.style.backgroundColor = success ? '#90EE90' : '#FF7F7F';
@@ -200,16 +246,17 @@ function onTicks(ticks) {
 function monitorRow(row) {
   //console.log("Before adding row Cache", zerodhaCache, row);
   zerodhaCache[row.rowId] = {
-    buyScript: row.buyScript.split('/')[0],
-    sellScript: row.sellScript.split('/')[0],
-    buyToken: row.buyScript.split('/')[1],
-    sellToken: row.sellScript.split('/')[1],
+    buyScript: row.buyScript,
+    sellScript: row.sellScript,
+    buyToken: row.buyToken,
+    sellToken: row.sellToken,
     depth: row.depth,
     threshold: row.threshold,
     status: 'Yet to Start',
     orderFlag: row.orderFlag,
     quantity: row.quantity,
-    premiumLess: row.premiumLess
+    premiumLess: row.premiumLess,
+    orderType: row.orderType,
   }
   //console.log("Cache", zerodhaCache);
   //console.log("Cache row", zerodhaCache[row.rowId]);
@@ -261,36 +308,81 @@ function isEligible(premiumLess, threshold, difference) {
   return ((premiumLess && difference <= threshold) || (!premiumLess && difference >= threshold))
 }
 
-function addNewRow() {
-  if (!doValidation()) {
-    return
+function getTokenFromSymbol(symbol, baseInstrument) {
+  //console.log('Symbol',symbol)
+  if(baseInstrument == 'NIFTY'){
+    return getNiftySymbols()[symbol]
   }
-  const buyScript = document.getElementById('buyScript').value;
-  const sellScript = document.getElementById('sellScript').value;
-  const depth = document.getElementById('depth').value;
+  if(baseInstrument == 'BANKNIFTY'){
+    return getBankNiftySymbols(symbol)
+  }
+  new Error('Invalid baseInstrument')
+}
+
+function isMonthlyExpiry(expiry, baseInstrument){
+  
+  if(baseInstrument == 'NIFTY'){
+      let currentExpiryIndex = getNiftyExpiry().indexOf(expiry)
+      let nextExpiry = getNiftyExpiry()[currentExpiryIndex + 1]
+      return expiry.substring(3, 5) != nextExpiry.substring(3, 5)
+  }
+  if(baseInstrument == 'BANKNIFTY'){
+    let currentExpiryIndex = getBankNiftyExpiry().indexOf(expiry)
+    let nextExpiry = getBankNiftyExpiry()[currentExpiryIndex + 1]
+    return expiry.substring(3, 5) != nextExpiry.substring(3, 5)
+  }
+  return false
+}
+
+function formatExpiry(expiry, baseInstrument){
+    let day = expiry.substring(0, 2)
+    let month = expiry.substring(2, 5)
+    let year = expiry.substring(5, 7)
+    //console.log('Expiry', expiry, year, day, month)
+    return (isMonthlyExpiry(expiry, baseInstrument) ? `${year}${month}`:`${year}${MONTHS[month]}${day}`).toUpperCase()
+}
+
+function addNewRow() {
+  if(!doValidation()){
+      return
+  }
+  const orderFlag = document.getElementById('action').value == 'order';
+  const baseInstrument = document.getElementById('baseInstrument').value;
+  const strike = document.getElementById('strike').value;
+  const optionType = document.getElementById('optionType').value;
+  const quantity = document.getElementById('quantity')?.value;
+  let sellExpiry = document.getElementById(`sellExpiry`).value;
+  sellExpiry = sellExpiry.substring(0, 5) + sellExpiry.substring(7)
+  let buyExpiry = document.getElementById(`buyExpiry`).value;
+  buyExpiry = buyExpiry.substring(0, 5) + buyExpiry.substring(7)
   const premiumLess = document.getElementById('premiumLess').value;
   const threshold = document.getElementById('threshold').value;
-  const quantity = document.getElementById('quantity').value;
-  const orderFlag = document.getElementById('orderPlz').checked;
-
+  const depth = document.getElementById('depth').value;
+  const orderType = document.getElementById('orderType')?.value;
+  const buyScript = `${baseInstrument}${formatExpiry(buyExpiry)}${strike}${optionType}`;
+  const sellScript = `${baseInstrument}${formatExpiry(sellExpiry)}${strike}${optionType}`
+  
   const tbody = document.getElementById('alertsTableBody');
   const row = tbody.insertRow();
   row.id = 'row-' + rowNumber;
-
+  
   const cells = [
-    { value: buyScript },
-    { value: sellScript },
-    { value: quantity },
-    { value: depth },
-    { value: `${(premiumLess == 'lt' ? '< ' : '> ') + threshold}` },
-    { value: '0' },
-    { value: '0' },
-    { value: '0' },
-    { value: 'Yet to Start' },
-    { value: orderFlag }
+    {value: `${orderFlag ? '🚚' : '🔔'}`},
+    {value: `${capitalizeFirstLetter(baseInstrument.toLowerCase())}`},
+    {value: strike},
+    {value: `${optionType == 'CE'? 'Call': 'Put'}`},
+    {value: `${quantity ? quantity : '-'}`},
+    {value: sellExpiry},
+    {value: buyExpiry},
+    {value: `${depths[depth]}`},
+    {value: `${orderType ? capitalizeFirstLetter(orderType.toLowerCase()) : '-'}`},
+    {value: '0'},
+    {value: '0'},
+    {value: '0'},
+    {value: '⭕'}
   ];
 
-  cells.forEach(({ value }) => {
+  cells.forEach(({value}) => {
     const cell = row.insertCell();
     cell.textContent = value;
   });
@@ -298,33 +390,30 @@ function addNewRow() {
   // Add a Cancel button
   const cancelCell = row.insertCell();
   const cancelButton = document.createElement('button');
-  cancelButton.textContent = 'Cancel';
+  cancelButton.textContent = '✘';
   cancelButton.addEventListener('click', () => cancelRow(row.id));
   cancelCell.appendChild(cancelButton);
 
   // Clear form inputs
-  //document.getElementById('buyScript').value = '';
-  //document.getElementById('sellScript').value = '';
-  document.getElementById('depth').value = '';
-  document.getElementById('threshold').value = '';
-  document.getElementById('premiumLess').value = '';
-  document.getElementById('orderPlz').checked = false;
+  clearForm()
+  
   rowNumber++;
-  if (orderFlag) {
-    orderNumber++
+  if(orderFlag){
+      orderNumber++
   }
-
   monitorRow({
-    buyScript: buyScript,
-    sellScript: sellScript,
-    depth: depth,
-    threshold: Number(Number(threshold).toFixed(2)),
-    rowId: row.id,
-    status: 'Yet to Start',
-    orderFlag: orderFlag,
-    quantity: quantity,
-    premiumLess: premiumLess == 'lt' ? true : false
-  });
+      buyToken: getTokenFromSymbol(buyScript, baseInstrument),
+      sellToken: getTokenFromSymbol(sellScript, baseInstrument),
+      depth: depth,
+      threshold: Number(Number(threshold).toFixed(2)),
+      rowId: row.id,
+      quantity: quantity,
+      orderFlag: orderFlag,
+      buyScript: buyScript,
+      sellScript: sellScript,
+      premiumLess: premiumLess == 'lt' ? true : false,
+      orderType: orderType.toUpperCase(),
+  })
 }
 
 function scheduleDisconnectAt345PM() {
@@ -354,6 +443,57 @@ function scheduleDisconnectAt345PM() {
 
 document.addEventListener('zerodha-login-success', loadUser);
 document.getElementById('addFormButton').addEventListener('click', addNewRow);
+
+document.getElementById('baseInstrument').addEventListener('change', function() {
+    const selectedInstrument = document.getElementById('baseInstrument').value
+    const expiryValues = selectedInstrument === 'NIFTY' ? getNiftyExpiry() : getBankNiftyExpiry();
+    const buyExpirySelect = document.getElementById("buyExpiry")
+    const sellExpirySelect = document.getElementById("sellExpiry")
+    const quantitySelect = document.getElementById("quantity")
+    // Clear existing options
+    buyExpirySelect.innerHTML = '';
+    sellExpirySelect.innerHTML = '';
+    quantitySelect.innerHTML = '';
+
+    // Add default empty option
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = 'Select';
+    buyExpirySelect.appendChild(defaultOption.cloneNode(true));
+    sellExpirySelect.appendChild(defaultOption.cloneNode(true));
+    quantitySelect.appendChild(defaultOption.cloneNode(true));
+
+    quantities[selectedInstrument].forEach(quantity => {
+        const qtyOption = document.createElement('option');
+        qtyOption.value = quantity;
+        qtyOption.textContent = quantity;
+        quantitySelect.appendChild(qtyOption);
+    });
+
+    // Populate both dropdowns
+    expiryValues.forEach(expiry => {
+        const buyOption = document.createElement('option');
+        buyOption.value = expiry;
+        buyOption.textContent = expiry;
+        buyExpirySelect.appendChild(buyOption);
+        
+        const sellOption = document.createElement('option');
+        sellOption.value = expiry;
+        sellOption.textContent = expiry;
+        sellExpirySelect.appendChild(sellOption);
+    });
+});
+
+document.getElementById('action').addEventListener('change', function() {
+    const action = document.getElementById('action').value
+    if(action =='alert' || action ==''){
+        document.getElementById('action-depth').style.display = 'none'
+        document.getElementById('qunatity-section').style.display = 'none'
+    } else {
+        document.getElementById('action-depth').style.display = 'block'
+        document.getElementById('qunatity-section').style.display = 'block'
+    }
+});
 
 scheduleDisconnectAt345PM()
 
