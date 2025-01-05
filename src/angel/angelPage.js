@@ -64,13 +64,13 @@ function monitorRow(row){
         orderFlag: row.orderFlag,
         buyScript: row.buyScript,
         sellScript: row.sellScript,
-        premiumLess: row.premiumLess
+        premiumLess: row.premiumLess,
+        orderType: row.orderType
     }
     tokenCounter[row.buyToken] = tokenCounter[row.buyToken] ? tokenCounter[row.buyToken] + 1 : 1;
     tokenCounter[row.sellToken] = tokenCounter[row.sellToken] ? tokenCounter[row.sellToken] + 1 : 1;
     tickerConnect(subscribe, [row.buyToken, row.sellToken], row.rowId)
 }
-
 
 function cancelRow(rowId) {
     const row = document.getElementById(rowId);
@@ -105,7 +105,7 @@ function doValidation(){
         return false;
     }
     const quantity = document.getElementById('quantity').value;
-    if(quantity == ''){
+    if(action == 'order' && quantity == ''){
         alert('Please select Quantity')
         return false;
     }
@@ -156,7 +156,7 @@ function addNewRow() {
     const baseInstrument = document.getElementById('baseInstrument').value;
     const strike = document.getElementById('strike').value;
     const optionType = document.getElementById('optionType').value;
-    const quantity = document.getElementById('quantity').value;
+    const quantity = document.getElementById('quantity')?.value;
     let sellExpiry = document.getElementById(`sellExpiry`).value;
     sellExpiry = sellExpiry.substring(0, 5) + sellExpiry.substring(7)
     let buyExpiry = document.getElementById(`buyExpiry`).value;
@@ -177,7 +177,7 @@ function addNewRow() {
       {value: `${capitalizeFirstLetter(baseInstrument.toLowerCase())}`},
       {value: strike},
       {value: `${optionType == 'CE'? 'Call': 'Put'}`},
-      {value: quantity},
+      {value: `${quantity ? quantity : '-'}`},
       {value: sellExpiry},
       {value: buyExpiry},
       {value: `${depths[depth]}`},
@@ -275,9 +275,10 @@ function placeOrder(order){
         "symboltoken":String(order.token),
         "transactiontype":order.transactiontype,
         "exchange":"NFO",
-        "ordertype":"MARKET",
+        "ordertype":order.orderType,
         "producttype":"CARRYFORWARD",
         "duration":"DAY",
+        "price":order.price,
         "quantity": String(order.quantity)
     })
 }
@@ -381,12 +382,16 @@ function isThresholdCrossed() {
                         tradingsymbol: leg.buyScript,
                         token: leg.buyToken,
                         quantity: leg.quantity,
-                        transactiontype: 'BUY'
+                        transactiontype: 'BUY',
+                        orderType: leg.orderType,
+                        price: (Number(buyPrice) + 2).toFixed(2),
                     }, {
                         tradingsymbol: leg.sellScript,
                         token: leg.sellToken,
                         quantity: leg.quantity,
-                        transactiontype: 'SELL'
+                        transactiontype: 'SELL',
+                        orderType: leg.orderType,
+                        price: (Number(sellPrice) + 2).toFixed(2),
                     }).then(result => {
                         console.log("Order result ", result)
                         if(result.success){
@@ -504,8 +509,10 @@ document.getElementById('action').addEventListener('change', function() {
     const action = document.getElementById('action').value
     if(action =='alert' || action ==''){
         document.getElementById('action-depth').style.display = 'none'
+        document.getElementById('qunatity-section').style.display = 'none'
     } else {
         document.getElementById('action-depth').style.display = 'block'
+        document.getElementById('qunatity-section').style.display = 'block'
     }
 });
 

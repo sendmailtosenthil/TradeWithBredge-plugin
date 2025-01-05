@@ -5,11 +5,12 @@ const TerserPlugin = require('terser-webpack-plugin');
 const WebpackObfuscator = require('webpack-obfuscator');
 
 module.exports = {
-    mode: 'production', // or 'development' for debugging
-    //devtool: 'source-map', // CSP-compliant source maps
+    // mode: 'development', // or 'development' for debugging
+    // devtool: 'source-map', // CSP-compliant source maps
     // optimization: {
     //     usedExports: false, // Disable tree-shaking
     // },
+    mode: 'production',
     optimization: {
         minimize: true,
         minimizer: [
