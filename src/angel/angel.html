@@ -261,80 +261,14 @@
   <div id="main-content" class="page-container" style="display: none;">
     <div class="top-section">
       <div class="tab-container">
-      <div class="tab active" data-tab="calendar-spread">Calendar Spread</div>
-      <div class="tab" data-tab="target-stoploss">Target & Stoploss</div>
-      <div class="tab" data-tab="straddle">Straddle</div>
-    </div>
-      <div class="tab-content active" id="calendar-spread-content" tab-id="1">
-        <div class="form-container" id="monitoring-form">
-          <div class="form-row">
-            <select id="action">
-              <option value="">Select</option>
-              <option value="alert">Alert me 🔔</option>
-              <option value="order">Place Order 🚚</option>
-            </select>
-            <span>for</span>
-            <select id="baseInstrument">
-              <option value="">Select</option>
-              <option value="NIFTY">Nifty</option>
-              <option value="BANKNIFTY">Bank Nifty</option>
-            </select>
-            <span>at a strike price of</span>
-            <input type="text" id="strike" placeholder="25000">
-            <span>with</span>
-            <select id="optionType">
-              <option value="">Select</option>
-              <option value="PE">Put</option>
-              <option value="CE">Call</option>
-            </select>
-            <span>option</span>
-            <div id="qunatity-section" style="display: none;">
-              <span>of</span>
-              <select id="quantity">
-                <option value="">Select</option>
-              </select>
-              <span>units,</span>
-            </div>
-            <span>having sell expiry on</span>
-            <select id="sellExpiry"></select>
-            <span>and buy expiry on</span>
-            <select id="buyExpiry"></select>
-            <span>, where premium difference is</span>
-            <select id="premiumLess">
-              <option value="">Select</option>
-              <option value="lt">less than</option>
-              <option value="gt">more than</option>
-            </select>
-            <input type="number" id="threshold" step="0.5" placeholder="200">
-            <span>based on </span>
-            <select id="depth">
-              <option value="">Select</option>
-              <option value="0">first</option>
-              <option value="1">second</option>
-              <option value="2">third</option>
-              <option value="3">fourth</option>
-              <option value="4">fifth</option>
-            </select>
-            <span>depth</span>
-            <div id="action-depth" style="display: none;">
-              <span>using a</span>
-              <select id="orderType">
-                <option value="">Select</option>
-                <option value="LIMIT">limit</option>
-                <option value="MARKET">market</option>
-              </select>
-              <span>order</span>
-            </div>
-            <span>.</span>
-          </div>
-          <div class="retain-section">
-            <span>Retain values for next order</span>
-            <input type="checkbox" id="retain">
-            <input type="button" id="addFormButton" value="✓ Add Leg" />
-          </div>
-        </div>
+        <div class="tab active" data-tab="calendar-spread">Calendar Spread</div>
+        <div class="tab" data-tab="target-stoploss">Target</div>
+        <div class="tab" data-tab="straddle">Stoploss</div>
       </div>
-      <div class="tab-content" id="target-stoploss-content" tab-id="2">
+      <div class="tab-content active" id="calendar-spread-content" tab-id="1">
+        
+      </div>
+      <div class="tab-content" id="target-content" tab-id="2">
         <div class="form-container">
           <div class="form-row">
             <span>Target Percentage:</span>
@@ -344,8 +278,7 @@
           </div>
         </div>
       </div>
-      
-      <div class="tab-content" id="straddle-content" tab-id="3">
+      <div class="tab-content" id="stoploss-content" tab-id="3">
         <div class="form-container">
           <div class="form-row">
             <span>Straddle Strategy Coming Soon!</span>
@@ -376,6 +309,73 @@
         <tbody id="alertsTableBody">
         </tbody>
       </table>
+    </div>
+  </div>
+  <div class="form-container" id="form-template" style="display: none;">
+    <div class="form-row">
+      <select id="action">
+        <option value="">Select</option>
+        <option value="alert">Alert me 🔔</option>
+        <option value="order">Place Order 🚚</option>
+      </select>
+      <span>for</span>
+      <select id="baseInstrument">
+        <option value="">Select</option>
+        <option value="NIFTY">Nifty</option>
+        <option value="BANKNIFTY">Bank Nifty</option>
+      </select>
+      <span>at a strike price of</span>
+      <input type="text" id="strike" placeholder="25000">
+      <span>with</span>
+      <select id="optionType">
+        <option value="">Select</option>
+        <option value="PE">Put</option>
+        <option value="CE">Call</option>
+      </select>
+      <span>option</span>
+      <div id="qunatity-section" style="display: none;">
+        <span>of</span>
+        <select id="quantity">
+          <option value="">Select</option>
+        </select>
+        <span>units,</span>
+      </div>
+      <span>having sell expiry on</span>
+      <select id="sellExpiry"></select>
+      <span>and buy expiry on</span>
+      <select id="buyExpiry"></select>
+      <span>, where premium difference is</span>
+      <select id="premiumLess">
+        <option value="">Select</option>
+        <option value="lt">less than</option>
+        <option value="gt">more than</option>
+      </select>
+      <input type="number" id="threshold" step="0.5" placeholder="200">
+      <span>based on </span>
+      <select id="depth">
+        <option value="">Select</option>
+        <option value="0">first</option>
+        <option value="1">second</option>
+        <option value="2">third</option>
+        <option value="3">fourth</option>
+        <option value="4">fifth</option>
+      </select>
+      <span>depth</span>
+      <div id="action-depth" style="display: none;">
+        <span>using a</span>
+        <select id="orderType">
+          <option value="">Select</option>
+          <option value="LIMIT">limit</option>
+          <option value="MARKET">market</option>
+        </select>
+        <span>order</span>
+      </div>
+      <span>.</span>
+    </div>
+    <div class="retain-section">
+      <span>Retain values for next order</span>
+      <input type="checkbox" id="retain">
+      <input type="button" id="addFormButton" value="✓ Add Leg" />
     </div>
   </div>
   <audio id="alertSound" src="../assets/alert.mp3" preload="auto"></audio>

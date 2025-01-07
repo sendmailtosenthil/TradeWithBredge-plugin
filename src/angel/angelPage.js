@@ -81,8 +81,39 @@ function postLoginSuccess(event){
             document.getElementById(`qunatity-section-${tabId}`).style.display = 'block'
         }   
     }
+    // Get the form template
+    const formTemplate = document.getElementById('form-template');
+
     Object.keys(TAB_ID_MAP).forEach(key => {
         const tabId = key
+
+        // Clone the form template
+        const clonedForm = formTemplate.cloneNode(true);
+        
+        // Remove the original template's ID and set a unique ID
+        clonedForm.removeAttribute('id');
+        clonedForm.id = `form-${tabId}`;
+
+        // Update all form elements to have tab-specific IDs
+        const elementsToUpdate = [
+            'baseInstrument', 'strike', 'optionType', 'quantity', 
+            'buyExpiry', 'sellExpiry', 'premiumLess', 'threshold', 
+            'depth', 'action', 'orderType', 'addFormButton', 'action-depth','qunatity-section'
+        ];
+
+        elementsToUpdate.forEach(elementName => {
+            const element = clonedForm.querySelector(`#${elementName}`);
+            if (element) {
+                element.id = `${elementName}-${tabId}`;
+                element.name = `${elementName}-${tabId}`;
+            }
+        });
+
+        // Append the cloned form to the appropriate tab content
+        const tabContent = document.getElementById(`${TAB_ID_MAP[key]}-content`);
+        clonedForm.style.display = 'block';
+        tabContent.appendChild(clonedForm);
+
         document.getElementById(`addFormButton-${tabId}`).addEventListener('click', e => addNewRow(e, tabId));
         document.getElementById(`baseInstrument-${tabId}`).addEventListener('change', e => baseInstrumentChange(e, tabId)); 
         document.getElementById(`action-${tabId}`).addEventListener('change', e=> actionChange(e, tabId));  
@@ -235,59 +266,59 @@ function cancelRow(rowId, tabId) {
 
 function doValidation(tabId){
     const action = document.getElementById(`action-${tabId}`).value;
-    if(orderNumber >= maxOrder && action == 'order'){
+    if(orderNumber >= maxOrder && action == 'order') {
         alert('You cannot make more than 2 running 🏃 orders at same time')
         return false;
     }
-    const baseInstrument = document.getElementById('baseInstrument').value;
-    if(baseInstrument == ''){
+    const baseInstrument = document.getElementById(`baseInstrument-${tabId}`).value;
+    if(baseInstrument == '') {
         alert('Please enter base instrument')
         return false;
     }
-    const strike = document.getElementById('strike').value;
-    if(strike == ''){
+    const strike = document.getElementById(`strike-${tabId}`).value;
+    if(strike == '') {
         alert('Please enter strike value')
         return false;
     }
-    const optionType = document.getElementById('optionType').value;
-    if(optionType == ''){
+    const optionType = document.getElementById(`optionType-${tabId}`).value;
+    if(optionType == '') {
         alert('Please select option type')
         return false;
     }
-    const quantity = document.getElementById('quantity').value;
-    if(action == 'order' && quantity == ''){
+    const quantity = document.getElementById(`quantity-${tabId}`)?.value;
+    if(action == 'order' && quantity == '') {
         alert('Please select Quantity')
         return false;
     }
 
-    let buyExpiry = document.getElementById(`buyExpiry`).value;
-    if(buyExpiry == ''){
+    let buyExpiry = document.getElementById(`buyExpiry-${tabId}`).value;
+    if(buyExpiry == '') {
         alert('Please enter Buy Expiry')
         return false;
     }
-    let sellExpiry = document.getElementById(`sellExpiry`).value;
-    if(sellExpiry == ''){
+    let sellExpiry = document.getElementById(`sellExpiry-${tabId}`).value;
+    if(sellExpiry == '') {
         alert('Please enter Sell Expiry')
         return false;
     }
-    const premiumLess = document.getElementById('premiumLess').value;
-    if(premiumLess == ''){
+    const premiumLess = document.getElementById(`premiumLess-${tabId}`).value;
+    if(premiumLess == '') {
         alert('Please enter Less Than or More Than premium')
         return false;
     }
 
-    const depth = document.getElementById('depth').value;
-    if(depth == ''){
+    const depth = document.getElementById(`depth-${tabId}`).value;
+    if(depth == '') {
         alert('Please select correct depth')
         return false;
     }
-    const threshold = document.getElementById('threshold').value;
-    if(threshold == ''){
+    const threshold = document.getElementById(`threshold-${tabId}`).value;
+    if(threshold == '') {
         alert('Please enter premium difference')
         return false;
     }
-    const orderType = document.getElementById('orderType')?.value;
-    if(action == 'order' && orderType == ''){
+    const orderType = document.getElementById(`orderType-${tabId}`)?.value;
+    if(action == 'order' && orderType == '') {
         alert('Please select appropriate order type')
         return false;
     }
@@ -308,8 +339,6 @@ function clearForm(tabId){
         return
     }
 }
-
-
 
 
 function updatePrices(key, buyPrice, sellPrice, threshold, premiumLess){
