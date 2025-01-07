@@ -25,6 +25,9 @@ export function AngelConnect(params) {
 		.then(response => response.json())
 		.then(data => {
 			self.public_ip = data.ip;
+		}).catch(e=>{
+			console.log('Error fetching public IP address');
+			self.public_ip = self.local_ip;
 		});
 
 	var requestInstance = axios.create({

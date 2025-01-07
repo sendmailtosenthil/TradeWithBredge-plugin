@@ -6,9 +6,8 @@ let ANGEL_TOTP_SECRET
 let ANGEL_USERNAME
 let ANGEL_PASSWORD
 let ANGEL_API_KEY
-let credentials = {
+let credentials = {}
 
-}
 function onLoginError(ex){
     let attempt = document.getElementById('attempt').value
     if(attempt && attempt > 3){
@@ -74,15 +73,6 @@ function isOneTimeSetUpDone(){
     console.log("ANGEL_USERNAME", ANGEL_USERNAME)
     return !(!ANGEL_USERNAME || !ANGEL_PASSWORD || !ANGEL_API_KEY || !ANGEL_TOTP_SECRET) 
 }
-
-// function isUserAlredyLoggedIn(){
-//     const today = new Date();
-//     const todayEightAM = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 8, 0, 0);
-//     let credentials = localStorage.getItem('angelCredentials');
-//     let lastTokenTime = localStorage.getItem('lastTokenTime');
-
-//     return (credentials && lastTokenTime && new Date(lastTokenTime) > todayEightAM && Object.keys(JSON.parse(credentials)).length > 0)
-// }
 
 function loginUser(saveLoginDetails = false){
     console.log("New token - Angel ", saveLoginDetails)
