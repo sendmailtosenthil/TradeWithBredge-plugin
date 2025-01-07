@@ -105,7 +105,7 @@
     }
 
     .top-section {
-      height: 22%;
+      height: 28%;
       overflow: hidden;
     }
 
@@ -199,6 +199,35 @@
     #threshold {
       width: 80px;
     }
+    .tab-container {
+    display: flex;
+    border-bottom: 1px solid #ddd;
+    background-color: #f1f1f1;
+  }
+
+  .tab {
+    padding: 10px 15px;
+    cursor: pointer;
+    background-color: #f1f1f1;
+    border: 1px solid #ddd;
+    border-bottom: none;
+    transition: background-color 0.3s;
+  }
+
+  .tab.active {
+    background-color: #ffffff;
+    border-top: 2px solid #4CAF50;
+    font-weight: bold;
+  }
+
+  .tab-content {
+    display: none;
+    padding: 10px;
+  }
+
+  .tab-content.active {
+    display: block;
+  }
   </style>
 </head>
 
@@ -229,10 +258,15 @@
     </div>
   </div>
 
-  <div class="page-container">
+  <div id="main-content" class="page-container" style="display: none;">
     <div class="top-section">
-      <div class="content">
-        <div class="form-container" id="monitoring-form" style="display: none;">
+      <div class="tab-container">
+      <div class="tab active" data-tab="calendar-spread">Calendar Spread</div>
+      <div class="tab" data-tab="target-stoploss">Target & Stoploss</div>
+      <div class="tab" data-tab="straddle">Straddle</div>
+    </div>
+      <div class="tab-content active" id="calendar-spread-content" tab-id="1">
+        <div class="form-container" id="monitoring-form">
           <div class="form-row">
             <select id="action">
               <option value="">Select</option>
@@ -300,10 +334,27 @@
           </div>
         </div>
       </div>
+      <div class="tab-content" id="target-stoploss-content" tab-id="2">
+        <div class="form-container">
+          <div class="form-row">
+            <span>Target Percentage:</span>
+            <input type="number" id="target-percentage" placeholder="Enter target %">
+            <span>Stoploss Percentage:</span>
+            <input type="number" id="stoploss-percentage" placeholder="Enter stoploss %">
+          </div>
+        </div>
+      </div>
+      
+      <div class="tab-content" id="straddle-content" tab-id="3">
+        <div class="form-container">
+          <div class="form-row">
+            <span>Straddle Strategy Coming Soon!</span>
+          </div>
+        </div>
+      </div>
     </div>
-
     <div class="bottom-section">
-      <table id="alertsTable" style="display: none;">
+      <table id="alertsTable">
         <thead>
           <tr>
             <th>Type</th>

@@ -1,5 +1,6 @@
 import "../lib/config.js"
 import "./angel_script_downloader.js"
+import "../lib/tabs.js"
 //import "./otpauth.umd.min.js"
 //import "./axios.min.js"
 import "./angel_constants.js"
