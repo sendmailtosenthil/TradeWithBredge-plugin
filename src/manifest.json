@@ -14,7 +14,8 @@
       "*://*.tradewithbredge.in/*",
       "*://*.angelone.in/*",
       "https://cdn.jsdelivr.net/*",
-      "*://api.kite.trade/*"
+      "*://api.kite.trade/*",
+      "https://*.upstox.com/*"
     ],
     "action": {
       "default_popup": "popup.html"

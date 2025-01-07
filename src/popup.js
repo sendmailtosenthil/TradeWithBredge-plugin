@@ -32,4 +32,8 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('angel').addEventListener('click', () => {
     handleBrokerClick('Angel', 'angel/index.html');
   });
+
+  document.getElementById('upstox').addEventListener('click', () => {
+    handleBrokerClick('Upstox', 'upstox/index.html');
+  });
 });
