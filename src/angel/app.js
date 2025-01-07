@@ -1,5 +1,6 @@
 import "../lib/config.js"
 import "./angel_script_downloader.js"
+import '../lib/tab.js'
 //import "./otpauth.umd.min.js"
 //import "./axios.min.js"
 import "./angel_constants.js"
@@ -9,4 +10,6 @@ import "./angel_connect.js"
 import "./angel_ticker.js"
 import "./angel_login.js"
 import "./angelPage.js"
+import "./tss/tssPage.js"
+import "./tss/position.js"
 import "../lib/hourlyMessage.js"

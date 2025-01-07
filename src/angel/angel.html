@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Angel Ticker</title>
+  <link rel="stylesheet" href="../assets/tabs.css">
   <style>
     /* Global Resets and Base Styles */
     body {
@@ -199,6 +200,52 @@
     #threshold {
       width: 80px;
     }
+
+    #positions-overlay{
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    #positions-content{
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 80%;
+      max-width: 800px;
+      max-height: 80%;
+      overflow: auto;
+    }
+
+    #positions-table{
+      width: 100%;
+              border-collapse: collapse;
+    }
+
+    #group-positions{
+      padding: 10px;
+                  background-color: #4CAF50;
+                  color: white;
+                  border: none;
+                  border-radius: 5px;
+                  margin-right: 10px;
+    }
+
+    #close-positions{
+      padding: 10px;
+                  background-color: #f44336;
+                  color: white;
+                  border: none;
+                  border-radius: 5px;
+    }
   </style>
 </head>
 
@@ -229,10 +276,19 @@
     </div>
   </div>
 
-  <div class="page-container">
-    <div class="top-section">
-      <div class="content">
-        <div class="form-container" id="monitoring-form" style="display: none;">
+  <div class="page-container" style="display: block;">
+    <!-- Tab Navigation -->
+    <div class="tab-container">
+      <div class="tab active" data-tab="calendar-spread">Calendar Spread</div>
+      <div class="tab" data-tab="target-stoploss">Target & Stoploss</div>
+      <div class="tab" data-tab="straddle-strangle">Straddle Strangle</div>
+    </div>
+
+    <!-- Tab Contents -->
+    <div class="tab-content active" id="calendar-spread">
+      <div class="top-section">
+        <!-- Existing monitoring form content for Calendar Spread -->
+        <div class="form-container" id="monitoring-form">
           <div class="form-row">
             <select id="action">
               <option value="">Select</option>
@@ -302,6 +358,89 @@
       </div>
     </div>
 
+    <div class="tab-content" id="target-stoploss">
+      <div class="top-section">
+        <div class="content">
+          <div id="openPositionsDiv">
+            <input type="button" id="openPositions" value="Open My Positions"/>
+          </div>
+          <div id="target-stoploss-form" style="display: none;">
+            <div class="form-container">
+              <div class="form-row">
+                <span>Selected positions are :</span>
+                <div id="selected-positions"></div>
+              </div>
+              <div class="form-row">
+                <span>For the above positions</span>
+                <select id="tss-action">
+                  <option value="">Select</option>
+                  <option value="alert">Alert me 🔔</option>
+                  <option value="order">Place Order 🚚</option>
+                </select>
+                <span>for target of</span>
+                <input type="number" id="target-price" placeholder="1000">
+                <span>and stop loss of</span>
+                <input type="number" id="stoploss-price" placeholder="1500">
+                <span>based on </span>
+                <select id="tss-depth">
+                  <option value="">Select</option>
+                  <option value="0">first</option>
+                  <option value="1">second</option>
+                  <option value="2">third</option>
+                  <option value="3">fourth</option>
+                  <option value="4">fifth</option>
+                </select>
+                <span>depth</span>
+                <div id="tss-action-depth" style="display: none;">
+                  <span>using a</span>
+                  <select id="tss-orderType">
+                    <option value="">Select</option>
+                    <option value="LIMIT">limit</option>
+                    <option value="MARKET">market</option>
+                  </select>
+                  <span>order</span>
+                </div>
+                
+              </div>
+              <div class="form-row">
+                <input type="button" id="add-target-stoploss-group" value="Add Group"/>
+                <input type="button" id="openPositions" value="Open My Positions" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="straddle-strangle">
+      <div class="top-section">
+        <div class="content">
+          Under Construction, Coming Soon
+        </div>
+      </div>
+    </div>
+
+    <div id="positions-overlay" style="display: none;">
+      <div id="positions-content">
+          <table id="positions-table">
+              <thead>
+                  <tr>
+                      <th><input type="checkbox" id="select-all"></th>
+                      <th>Transaction Type</th>
+                      <th>Symbol</th>
+                      <th>Quantity</th>
+                      <th>Price</th>
+                  </tr>
+              </thead>
+              <tbody id="positions-tbody">
+              </tbody>
+          </table>
+          <div style="margin-top: 10px;">
+              <button id="group-positions">Submit Selected Positions</button>
+              <button id="close-positions">Close</button>
+          </div>
+      </div>
+    </div>
     <div class="bottom-section">
       <table id="alertsTable" style="display: none;">
         <thead>
@@ -327,8 +466,9 @@
       </table>
     </div>
   </div>
+
   <div class="copyright-section" style="text-align: center; padding: 10px; background-color: #f8f9fa; font-size: 12px; color: #666;">
-    © 2025 Trade With Bredge. Version 3.0.0. All rights reserved.
+    © 2025 Trade With Bredge. Version 3.0.1. All rights reserved.
   </div>
   <audio id="alertSound" src="../assets/alert.mp3" preload="auto"></audio>
   <script src="bundle.js"></script>
