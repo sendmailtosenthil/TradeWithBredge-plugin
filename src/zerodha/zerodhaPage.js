@@ -169,29 +169,29 @@ function subscribe(tokens) {
 
 function calculateRowPrices() {
   const toBeDeleted = [];
-  console.log("Calculating Row Prices", zerodhaCache, tokenPricesCache);
+  //console.log("Calculating Row Prices", zerodhaCache, tokenPricesCache);
   Object.keys(zerodhaCache).forEach(rowId => {
     const row = zerodhaCache[rowId];
     const buyToken = Number(row.buyToken);
     const sellToken = Number(row.sellToken);
-    console.log("tokenPricesCache ", tokenPricesCache, buyToken, sellToken, tokenPricesCache[buyToken], row.depth - 1);
+    //console.log("tokenPricesCache ", tokenPricesCache, buyToken, sellToken, tokenPricesCache[buyToken], row.depth - 1);
     row.buyPrice = tokenPricesCache[buyToken]?.sellPrices[row.depth - 1]?.price || 0;
     row.sellPrice = tokenPricesCache[sellToken]?.buyPrices[row.depth - 1]?.price || 0;
-    console.log("Buy Price", row.buyPrice, "Sell Price", row.sellPrice);
+    //console.log("Buy Price", row.buyPrice, "Sell Price", row.sellPrice);
     const rowDoc = document.getElementById(rowId);
     rowDoc.cells[indexes['buyPrice']].textContent = row.buyPrice;
     rowDoc.cells[indexes['sellPrice']].textContent = row.sellPrice;
     if (row.buyPrice > 0 && row.sellPrice > 0) {
       const diff = Number(Math.abs(row.buyPrice - row.sellPrice).toFixed(2));
-      rowDoc.cells[indexes['difference']].textContent = diff;
-      rowDoc.cells[indexes['status']].textContent = 'Running'
+      rowDoc.cells[indexes['difference']].textContent = `${row.premiumLess ? row.threshold +' < ' + diff : row.threshold +' > ' + diff}`;
+      rowDoc.cells[indexes['status']].textContent = '🏃'
       if (isEligible(row.premiumLess, row.threshold, diff)) {
         console.log("Difference is less than threshold & unsubscribed tokens");
         const alertSound = document.getElementById('alertSound');
         alertSound.play();
         toBeDeleted.push(rowId)
-        rowDoc.cells[indexes['status']].textContent = 'Completed'
-        rowDoc.style.backgroundColor = '#90EE90';
+        rowDoc.cells[indexes['status']].textContent = '✔'
+        rowDoc.style.backgroundColor = '#D2F8D2';
         if (row.orderFlag) {
           console.log("Order Placed");
           row.orderFlag = false;
@@ -230,9 +230,9 @@ function calculateRowPrices() {
 
 function onTicks(ticks) {
   ticks.forEach(tick => {
-    console.log(tick);
+    //console.log(tick);
     if (tick?.depth?.buy) {
-      console.log("Buy Price", tick.depth.buy, "Sell Price", tick.depth.sell);
+      //console.log("Buy Price", tick.depth.buy, "Sell Price", tick.depth.sell);
       const instrumentToken = Number(tick.instrument_token);
       tokenPricesCache[instrumentToken] = {
         buyPrices: tick.depth.buy,
@@ -259,10 +259,12 @@ function monitorRow(row) {
     orderType: row.orderType,
   }
   //console.log("Cache", zerodhaCache);
-  //console.log("Cache row", zerodhaCache[row.rowId]);
+  console.log("Add row with ", zerodhaCache[row.rowId].buyScript, zerodhaCache[row.rowId].buyToken, zerodhaCache[row.rowId].sellScript, zerodhaCache[row.rowId].sellToken);
 
-  if (ticker != null || !ticker.isAlreadyConnected()) {
-    ticker.connect();
+  if(ticker == null){
+    loadUser()
+  }
+  if (!ticker.isAlreadyConnected()) {
     ticker.on('connect', function () {
       ticker.on("ticks", onTicks);
       ticker.on("error", function (e) {
@@ -273,6 +275,7 @@ function monitorRow(row) {
       });
       //subscribe([Number(cache[row.rowId].buyToken), Number(cache[row.rowId].sellToken)]);
     });
+    ticker.connect();
   } else {
     subscribe([Number(zerodhaCache[row.rowId].buyToken), Number(zerodhaCache[row.rowId].sellToken)]);
   }

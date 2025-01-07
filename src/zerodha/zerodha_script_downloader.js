@@ -14,7 +14,7 @@ function loadScripMasterData() {
     const savedData = localStorage.getItem('zerodhaScripMasterData');
     const lastSavedDate = localStorage.getItem('zerodhaScripMasterLastUpdate');
     
-    if (savedData && lastSavedDate === today) {
+    if (savedData && lastSavedDate === today && Object.keys(JSON.parse(savedData)).length > 0) {
         console.log('Using saved data');
         const data = JSON.parse(savedData);
         niftyExpiry = [...data.expiry.NIFTY];
