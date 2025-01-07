@@ -412,8 +412,8 @@ function isThresholdCrossed() {
     Object.keys(cache).forEach(key => {
         const leg = cache[key]
         //console.log("Leg ", leg, "tokenPriceCache ",tokenPriceCache)
-        const buyPrice = tokenPriceCache[leg.buyToken]?.sellPrices[leg.depth-1]?.price || 0;
-        const sellPrice = tokenPriceCache[leg.sellToken]?.buyPrices[leg.depth-1]?.price || 0;
+        const buyPrice = tokenPriceCache[leg.buyToken]?.sellPrices[leg.depth]?.price || 0;
+        const sellPrice = tokenPriceCache[leg.sellToken]?.buyPrices[leg.depth]?.price || 0;
         if(buyPrice > 0 && sellPrice > 0) {
             const threshold = leg.threshold;
             updatePrices(key, buyPrice, sellPrice, threshold, leg.premiumLess);

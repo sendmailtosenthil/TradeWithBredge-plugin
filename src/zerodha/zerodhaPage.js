@@ -175,8 +175,8 @@ function calculateRowPrices() {
     const buyToken = Number(row.buyToken);
     const sellToken = Number(row.sellToken);
     //console.log("tokenPricesCache ", tokenPricesCache, buyToken, sellToken, tokenPricesCache[buyToken], row.depth - 1);
-    row.buyPrice = tokenPricesCache[buyToken]?.sellPrices[row.depth - 1]?.price || 0;
-    row.sellPrice = tokenPricesCache[sellToken]?.buyPrices[row.depth - 1]?.price || 0;
+    row.buyPrice = tokenPricesCache[buyToken]?.sellPrices[row.depth]?.price || 0;
+    row.sellPrice = tokenPricesCache[sellToken]?.buyPrices[row.depth]?.price || 0;
     //console.log("Buy Price", row.buyPrice, "Sell Price", row.sellPrice);
     const rowDoc = document.getElementById(rowId);
     rowDoc.cells[indexes['buyPrice']].textContent = row.buyPrice;
