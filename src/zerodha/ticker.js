@@ -1,4 +1,4 @@
-var KiteTicker = function(params) {
+const KiteTicker = function(params) {
 	var root = params.root || "wss://ws.kite.trade/";
 	var url = params.url
 
@@ -278,6 +278,11 @@ var KiteTicker = function(params) {
 		return tokens;
 	};
 
+	this.isAlreadyConnected = function() {
+		if(!ws || ws.readyState != ws.OPEN) return false;
+		return true;
+	}
+
 	/**
 	 * Parse received binary message
 	 * @memberOf KiteTicker
@@ -532,4 +537,4 @@ var KiteTicker = function(params) {
 	var self = this;
 };
 
-window.KiteTicker = KiteTicker;
+module.exports.KiteTicker = KiteTicker;

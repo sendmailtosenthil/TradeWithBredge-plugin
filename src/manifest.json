@@ -11,8 +11,11 @@
     ],
     "host_permissions": [
       "*://*.zerodha.com/*",
-      "*://*.tradewithbredge.com/*",
-      "http://localhost:*/*" 
+      "*://*.tradewithbredge.in/*",
+      "*://*.angelone.in/*",
+      "https://cdn.jsdelivr.net/*",
+      "*://api.kite.trade/*",
+      "https://*.upstox.com/*"
     ],
     "action": {
       "default_popup": "popup.html"
@@ -27,7 +30,7 @@
       "js": ["contentScript.js"]
     }],
     "content_security_policy": {
-      "extension_pages": "script-src 'self'; object-src 'self';"
+      "extension_pages": "script-src 'self' ; object-src 'self';"
     }
   }
   
