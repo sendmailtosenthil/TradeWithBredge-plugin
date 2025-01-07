@@ -317,22 +317,27 @@ function getTokenFromSymbol(symbol, baseInstrument) {
     return getNiftySymbols()[symbol]
   }
   if(baseInstrument == 'BANKNIFTY'){
-    return getBankNiftySymbols(symbol)
+    return getBankNiftySymbols()[symbol]
   }
   new Error('Invalid baseInstrument')
 }
 
 function isMonthlyExpiry(expiry, baseInstrument){
-  
   if(baseInstrument == 'NIFTY'){
       let currentExpiryIndex = getNiftyExpiry().indexOf(expiry)
       let nextExpiry = getNiftyExpiry()[currentExpiryIndex + 1]
-      return expiry.substring(3, 5) != nextExpiry.substring(3, 5)
+      const monthExpiry = expiry.substring(3, 5) != nextExpiry.substring(3, 5)
+      console.log('Nifty Month expiry :', monthExpiry)
+      return monthExpiry
   }
+  
   if(baseInstrument == 'BANKNIFTY'){
     let currentExpiryIndex = getBankNiftyExpiry().indexOf(expiry)
+    //console.log(getBankNiftyExpiry(), expiry, currentExpiryIndex, expiry.substring(3, 5))
     let nextExpiry = getBankNiftyExpiry()[currentExpiryIndex + 1]
-    return expiry.substring(3, 5) != nextExpiry.substring(3, 5)
+    const monthExpiry = expiry.substring(3, 5) != nextExpiry.substring(3, 5)
+    console.log('Bank Nifty Month expiry :', monthExpiry)
+    return monthExpiry
   }
   return false
 }
@@ -362,8 +367,8 @@ function addNewRow() {
   const threshold = document.getElementById('threshold').value;
   const depth = document.getElementById('depth').value;
   const orderType = document.getElementById('orderType')?.value;
-  const buyScript = `${baseInstrument}${formatExpiry(buyExpiry)}${strike}${optionType}`;
-  const sellScript = `${baseInstrument}${formatExpiry(sellExpiry)}${strike}${optionType}`
+  const buyScript = `${baseInstrument}${formatExpiry(buyExpiry, baseInstrument)}${strike}${optionType}`;
+  const sellScript = `${baseInstrument}${formatExpiry(sellExpiry, baseInstrument)}${strike}${optionType}`
   
   const tbody = document.getElementById('alertsTableBody');
   const row = tbody.insertRow();
