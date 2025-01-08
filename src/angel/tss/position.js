@@ -1,6 +1,32 @@
 import { getConnector } from "../angel_login.js";
 
+function runMock(){
+    const selectedPositions = [{
+        transactiontype: "BUY",
+        tradingsymbol: "BANKNIFTY30JAN2550000CE",
+        quantity: 30,
+        price: 100,
+        token: "39510"
+    },
+    {
+        transactiontype: "SELL",
+        tradingsymbol: "BANKNIFTY30JAN2549900CE",
+        quantity: 30,
+        price: 130,
+        token: "39508"
+    },
+    {
+        transactiontype: "SELL",
+        tradingsymbol: "BANKNIFTY30JAN2552900CE",
+        quantity: 60,
+        price: 150,
+        token: "39583"
+    }]
+    const myEvent = new CustomEvent("selected-positions", {"detail":{"positions": selectedPositions}});
+    document.dispatchEvent(myEvent)
+}
 document.getElementById('openPositions')?.addEventListener('click', async ()=>{
+    return runMock()
     let positions = await getConnector().getPosition()
     let currentPositions = positions?.data?.filter(p => p.exchange == "NFO" && 
         p.producttype == "CARRYFORWARD" && ["NIFTY","BANKNIFTY"].includes(p.symbolname)
@@ -9,8 +35,9 @@ document.getElementById('openPositions')?.addEventListener('click', async ()=>{
         return {
             transactiontype: p.netqty > 0 ? "BUY":"SELL",
             tradingsymbol: p.tradingsymbol,
-            quantity: p.netqty,
-            price: p.netprice
+            quantity: Math.abs(p.netqty),
+            price: p.netprice,
+            token: symboltoken
         }
     })
 

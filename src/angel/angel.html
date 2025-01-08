@@ -201,21 +201,21 @@
       width: 80px;
     }
 
-    #positions-overlay{
+    #positions-overlay {
       display: none;
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.5);
+      background: rgba(0, 0, 0, 0.5);
       display: flex;
       justify-content: center;
       align-items: center;
       z-index: 1000;
     }
 
-    #positions-content{
+    #positions-content {
       background: white;
       padding: 20px;
       border-radius: 10px;
@@ -225,26 +225,45 @@
       overflow: auto;
     }
 
-    #positions-table{
+    #positions-table {
       width: 100%;
-              border-collapse: collapse;
+      border-collapse: collapse;
     }
 
-    #group-positions{
+    #group-positions {
       padding: 10px;
-                  background-color: #4CAF50;
-                  color: white;
-                  border: none;
-                  border-radius: 5px;
-                  margin-right: 10px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      margin-right: 10px;
     }
 
-    #close-positions{
+    #close-positions {
       padding: 10px;
-                  background-color: #f44336;
-                  color: white;
-                  border: none;
-                  border-radius: 5px;
+      background-color: #f44336;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+
+    #alertsTableBody,
+    #tssTableBody {
+      font-size: 13px;
+    }
+
+    #alertsTable td,
+    #tssTable td {
+      font-size: 13px;
+      padding: 8px;
+      text-align: left;
+    }
+
+    .leg-text {
+      word-wrap: break-word;
+      white-space: normal;
+      max-width: 200px;
+      /* Optional: set a max-width to control the wrapping */
     }
   </style>
 </head>
@@ -362,7 +381,7 @@
       <div class="top-section">
         <div class="content">
           <div id="openPositionsDiv">
-            <input type="button" id="openPositions" value="Open My Positions"/>
+            <input type="button" id="openPositions" value="Open My Positions" />
           </div>
           <div id="target-stoploss-form" style="display: none;">
             <div class="form-container">
@@ -391,7 +410,7 @@
                   <option value="4">fifth</option>
                 </select>
                 <span>depth</span>
-                <div id="tss-action-depth" style="display: none;">
+                <div id="tss-action-order" style="display: none;">
                   <span>using a</span>
                   <select id="tss-orderType">
                     <option value="">Select</option>
@@ -400,10 +419,11 @@
                   </select>
                   <span>order</span>
                 </div>
-                
+
               </div>
               <div class="form-row">
-                <input type="button" id="add-target-stoploss-group" value="Add Group"/>
+                <input type="button" id="add-target-stoploss-group" value="Add Group" />
+                <input type="button" id="clear-group" value="Clear Group" />
                 <input type="button" id="openPositions" value="Open My Positions" />
               </div>
             </div>
@@ -422,52 +442,75 @@
 
     <div id="positions-overlay" style="display: none;">
       <div id="positions-content">
-          <table id="positions-table">
-              <thead>
-                  <tr>
-                      <th><input type="checkbox" id="select-all"></th>
-                      <th>Transaction Type</th>
-                      <th>Symbol</th>
-                      <th>Quantity</th>
-                      <th>Price</th>
-                  </tr>
-              </thead>
-              <tbody id="positions-tbody">
-              </tbody>
-          </table>
-          <div style="margin-top: 10px;">
-              <button id="group-positions">Submit Selected Positions</button>
-              <button id="close-positions">Close</button>
-          </div>
+        <table id="positions-table">
+          <thead>
+            <tr>
+              <th><input type="checkbox" id="select-all"></th>
+              <th>Transaction Type</th>
+              <th>Symbol</th>
+              <th>Quantity</th>
+              <th>Price</th>
+            </tr>
+          </thead>
+          <tbody id="positions-tbody">
+          </tbody>
+        </table>
+        <div style="margin-top: 10px;">
+          <button id="group-positions">Submit Selected Positions</button>
+          <button id="close-positions">Close</button>
+        </div>
       </div>
     </div>
     <div class="bottom-section">
-      <table id="alertsTable" style="display: none;">
-        <thead>
-          <tr>
-            <th>Type</th>
-            <th>Instrument</th>
-            <th>Strike</th>
-            <th>Option Type</th>
-            <th>Quantity</th>
-            <th>Sell Expiry</th>
-            <th>Buy Expiry</th>
-            <th>Depth</th>
-            <th>Order Type</th>
-            <th>Best Buy Price</th>
-            <th>Best Sell Price</th>
-            <th>Difference</th>
-            <th>Status</th>
-            <th>Your Action</th>
-          </tr>
-        </thead>
-        <tbody id="alertsTableBody">
-        </tbody>
-      </table>
+      <div class="table-content">
+        <table id="alertsTable" style="display: none;">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Instrument</th>
+              <th>Strike</th>
+              <th>Option Type</th>
+              <th>Quantity</th>
+              <th>Sell Expiry</th>
+              <th>Buy Expiry</th>
+              <th>Depth</th>
+              <th>Order Type</th>
+              <th>Best Buy Price</th>
+              <th>Best Sell Price</th>
+              <th>Difference</th>
+              <th>Status</th>
+              <th>Your Action</th>
+            </tr>
+          </thead>
+          <tbody id="alertsTableBody">
+          </tbody>
+        </table>
+      </div>
+      <div class="table-content">
+        <table id="tssTable" style="display: none;">
+          <thead>
+            <tr>
+              <th>Action</th>
+              <th>Depth</th>
+              <th>Order Type</th>
+              <th>Leg 1</th>
+              <th>Leg 2</th>
+              <th>Leg 3</th>
+              <th>Leg 4</th>
+              <th>PNL</th>
+              <th>Status</th>
+              <th>Your Action</th>
+            </tr>
+          </thead>
+          <tbody id="tssTableBody">
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
-  <div class="copyright-section" style="text-align: center; padding: 10px; background-color: #f8f9fa; font-size: 12px; color: #666;">
+  <div class="copyright-section"
+    style="text-align: center; padding: 10px; background-color: #f8f9fa; font-size: 12px; color: #666;">
     © 2025 Trade With Bredge. Version 3.0.1. All rights reserved.
   </div>
   <audio id="alertSound" src="../assets/alert.mp3" preload="auto"></audio>

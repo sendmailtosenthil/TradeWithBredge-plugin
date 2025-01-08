@@ -1,4 +1,6 @@
 let selectedPositions = [];
+let orderNumber = 0;
+const maxOrder = 2;
 
 function handleSelectedPositions(event) {
     document.getElementById('openPositionsDiv').style.display = 'none';
@@ -12,9 +14,11 @@ function handleSelectedPositions(event) {
     if (event.detail.positions && event.detail.positions.length > 0) {
         // Show the form if there are positions
         targetStoplossForm.style.display = 'block';
-        
+
         event.detail.positions.forEach((position, index) => {
-            selectedPositionsDiv.innerHTML = selectedPositionsDiv.innerHTML + `${position.transactiontype} ${position.tradingsymbol} of ${position.quantity} @ ${position.price} || `;
+            // Add color styling based on transaction type
+            const color = position.transactiontype.toLowerCase() === 'sell' ? 'red' : 'blue';
+            selectedPositionsDiv.innerHTML += `<span style="color: ${color};">${position.transactiontype} ${position.tradingsymbol} of ${Math.abs(position.quantity)} @ ${position.price}</span> || `;
         });
     } else {
         // Hide the form if no positions
@@ -22,19 +26,61 @@ function handleSelectedPositions(event) {
     }
 }
 
-// Add event listener for the Add Leg button
-document.getElementById('add-target-stoploss-group')?.addEventListener('click', () => {
-    const targetPrice = document.getElementById('target-price').value;
-    const stoplossPrice = document.getElementById('stoploss-price').value;
-    
-    // Here you can add logic to process the target and stoploss
-    console.log('Target Stoploss Leg:', {
-        positions: selectedPositions,
-        targetPrice,
-        stoplossPrice
-    });
+function onActionChange(event) {
+    const selectedOption = event.target.value;
+    if (selectedOption === 'alert') {
+        document.getElementById('tss-action-order').style.display = 'none';
+    } else {
+        document.getElementById('tss-action-order').style.display = 'block';
+    }
 
-    // Optional: You might want to dispatch an event or call a function to handle the leg addition
+}
+
+function doValidation(){
+    if (orderNumber >= maxOrder) {
+        alert('Maximum order limit reached');
+        return;
+    }
+}
+
+document.getElementById('clear-group')?.addEventListener('click', () => {
+    selectedPositions = [];
+    const selectedPositionsDiv = document.getElementById('selected-positions');
+    selectedPositionsDiv.innerHTML = '';
+    const targetStoplossForm = document.getElementById('target-stoploss-form');
+    targetStoplossForm.style.display = 'none';
+    document.getElementById('openPositionsDiv').style.display = 'block';
 });
 
+// Add event listener for the Add Leg button
+document.getElementById('add-target-stoploss-group')?.addEventListener('click', () => {
+    document.getElementById('tssTable').style.display = 'block';
+    const targetPrice = document.getElementById('target-price').value;
+    const stoplossPrice = document.getElementById('stoploss-price').value;
+    const action = document.getElementById('tss-action').value;
+    const orderType = document.getElementById('tss-orderType').value;
+    const depth = document.getElementById('tss-depth').value;
+
+    let positions = selectedPositions.map((p,i) => {
+        let obj = {}
+        obj[`leg-${i+1}`] = p
+        return obj
+    })
+    let msgBody = {
+        ...Object.assign({}, ...positions),
+        targetPrice,
+        stoplossPrice,
+        action,
+        orderType,
+        depth
+    }
+    // Here you can add logic to process the target and stoploss
+    const myEvent = new CustomEvent('add-tss-leg', {
+        "detail": msgBody
+    });
+    console.log('msgBody ', msgBody)
+    document.dispatchEvent(myEvent);
+});
+
+document.getElementById('tss-action').addEventListener('change', onActionChange);
 document.addEventListener('selected-positions', handleSelectedPositions)
