@@ -26,7 +26,7 @@ function runMock(){
     document.dispatchEvent(myEvent)
 }
 document.getElementById('openPositions')?.addEventListener('click', async ()=>{
-    return runMock()
+    //return runMock()
     let positions = await getConnector().getPosition()
     let currentPositions = positions?.data?.filter(p => p.exchange == "NFO" && 
         p.producttype == "CARRYFORWARD" && ["NIFTY","BANKNIFTY"].includes(p.symbolname)

@@ -71,3 +71,10 @@ You can view the **video** [here](https://youtu.be/_UDUnPlqyCI)
 1. Support for placing orders automatically
 2. Support for custom quantity for Buy and Sell Leg
 3. Support for Other Brokers like Angel Broking, Upstox, etc.
+
+# Angel One API
+login-success -> angel_login.js
+    login-success -> angel_websock.js
+ticker-available -> angel_websock.js
+    ticker-available -> cssPage.js
+# Zerodha API

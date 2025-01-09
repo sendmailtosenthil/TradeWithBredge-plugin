@@ -1,75 +1,82 @@
-import {WebSocketV2} from './angel_ticker.js'
+
 import { getNiftyExpiry, getBankNiftyExpiry, getBankNiftySymbols, getNiftySymbols } from './angel_script_downloader.js';
-import { ACTION, MODE, EXCHANGES } from './angel_constants.js';
-import { getConnector } from './angel_login.js';
-const cache = {};
+import {placeOrders} from './angel_connect_wrapper.js'
+
 const quantities = {
     'NIFTY': [75, 150, 225],
     'BANKNIFTY': [30, 60, 90]
 }
-const depths = {
-    '0': 'First',
-    '1': 'Second',
-    '2': 'Third',
-    '3': 'Fourth',
-    '4': 'Fifth'
-}
   
-const tokenPriceCache = {} 
-const tokenCounter = {}
-let rowNumber = 1;
 let maxOrder = 2;
 let orderNumber = 0;
-let indexes = {
-    difference: 11,
-    buyPrice: 9,
-    sellPrice: 10,
-    status: 12,
-    action: 13
-}
-let ticker
-
-function removeCache(rowId){
-    if(cache[rowId]){
-        tokenCounter[cache[rowId].buyToken] = tokenCounter[cache[rowId].buyToken] - 1;
-        tokenCounter[cache[rowId].sellToken] = tokenCounter[cache[rowId].sellToken] - 1;
-        if(cache[rowId].orderFlag){
-            orderNumber--;
-        }
-        delete cache[rowId];
-        let toBeUnsubscribeTokens = Object.keys(tokenCounter).filter(token => tokenCounter[token] == 0)
-        console.log('Unsubscribe ', toBeUnsubscribeTokens);
-        if(toBeUnsubscribeTokens.length > 0){
-            ticker.fetchData({
-                "correlationID": `Plug${rowId}`, 
-                "action":ACTION.Unsubscribe, 
-                "mode": MODE.SnapQuote, 
-                "exchangeType": EXCHANGES.nse_fo, 
-                "tokens": toBeUnsubscribeTokens
-            })
-        } 
-    }
-    if(Object.keys(cache).length == 0){
-        ticker.disconnect()
-    }   
-}
 
 function monitorRow(row){
-    cache[row.rowId] = {
-        buyToken: row.buyToken,
-        sellToken: row.sellToken,
-        depth: row.depth,
-        threshold: row.threshold,
-        quantity: row.quantity,
-        orderFlag: row.orderFlag,
-        buyScript: row.buyScript,
-        sellScript: row.sellScript,
-        premiumLess: row.premiumLess,
-        orderType: row.orderType
-    }
-    tokenCounter[row.buyToken] = tokenCounter[row.buyToken] ? tokenCounter[row.buyToken] + 1 : 1;
-    tokenCounter[row.sellToken] = tokenCounter[row.sellToken] ? tokenCounter[row.sellToken] + 1 : 1;
-    tickerConnect(subscribe, [row.buyToken, row.sellToken], row.rowId)
+    const myEvent = new CustomEvent('add-monitoring-leg', {"detail": {
+            leg_1 : function(){
+                return {
+                    symboltoken:Number(row.buyToken),
+                    transactiontype:'BUY',
+                    tradingsymbol: row.buyScript,
+                    quantity: row.quantity || 1,
+                    ordertype: row.orderType
+                }
+            },
+            leg_2: function(){
+                return {
+                    symboltoken:Number(row.sellToken),
+                    transactiontype:'SELL',
+                    tradingsymbol: row.sellScript,
+                    quantity: row.quantity || 1,
+                    ordertype: row.orderType
+                }
+            },
+            evalCriteria: function(tokenPrices){
+                const buyLeg = this.leg_1()
+                const sellLeg = this.leg_2()
+                
+                let buyPrice = (tokenPrices[buyLeg.symboltoken]?.sellPrices[row.depth]?.price || 0)
+                let sellPrice = (tokenPrices[sellLeg.symboltoken]?.buyPrices[row.depth]?.price || 0)
+                const diff = Number(Math.abs(buyPrice - sellPrice).toFixed(2))
+                const result = {
+                    criteriaMet: false,
+                    diff: diff,
+                    leg_1_price: buyPrice,
+                    leg_2_price: sellPrice,
+                };
+                if(buyPrice > 0 && sellPrice > 0){
+                    //console.log('buyPrice', buyPrice, 'sellPrice', sellPrice, 'diff', diff)
+                    result['criteriaMet'] = row.premiumLess ? diff <= row.threshold : diff >= row.threshold
+                } 
+                return result
+            },
+            placeOrder: function (prices, rowId){
+                if(row.orderFlag){
+                    placeOrders([{
+                        ...this.leg_1(),
+                        price:prices.leg_1_price
+                    }, {
+                        ...this.leg_2(),
+                        price:prices.leg_2_price
+                    }], rowId)
+                }
+            },
+            updateMonitorTag: function(criteriaResult){
+                const buyPrice = criteriaResult.leg_1_price || 0
+                const sellPrice = criteriaResult.leg_2_price || 0
+                const diff = criteriaResult.diff || 0
+                return `(${buyPrice}-${sellPrice}) ➛ ${diff} ${row.premiumLess ? '<=' : '>='} ${row.threshold}`
+            },
+            noOfLeg: 2,
+            algo:'css',
+            depth:row.depth,
+            orderFlag: row.orderFlag,
+            orderType: row.orderType,
+            premiumLess: row.premiumLess,
+            threshold: row.threshold,
+            tokens: [Number(row.buyToken), Number(row.sellToken)]
+        }
+    })
+    document.dispatchEvent(myEvent)
 }
 
 function cancelRow(rowId) {
@@ -79,8 +86,8 @@ function cancelRow(rowId) {
         row.style.backgroundColor = '#FFFFC5';
         row.cells[indexes['action']].textContent = '';
     }
-    removeCache(rowId);
-    console.log("Cache", cache);
+    const myEvent = CustomEvent('remove-monitoring-leg', {'detail':rowId})
+    document.dispatchEvent(myEvent)
 }
 
 function doValidation(){
@@ -144,11 +151,7 @@ function doValidation(){
     return true;
 }
 
-function capitalizeFirstLetter(val) {
-    return String(val).charAt(0).toUpperCase() + String(val).slice(1);
-}
-
-function addNewRow() {
+function onNewRow() {
     if(!doValidation()){
         return
     }
@@ -167,52 +170,20 @@ function addNewRow() {
     const orderType = document.getElementById('orderType')?.value;
     const buyScript = `${strike}${optionType}`;
     const sellScript = buyScript
-    
-    const tbody = document.getElementById('alertsTableBody');
-    const row = tbody.insertRow();
-    row.id = 'row-' + rowNumber;
-    
-    const cells = [
-      {value: `${orderFlag ? '🚚' : '🔔'}`},
-      {value: `${capitalizeFirstLetter(baseInstrument.toLowerCase())}`},
-      {value: strike},
-      {value: `${optionType == 'CE'? 'Call': 'Put'}`},
-      {value: `${quantity ? quantity : '-'}`},
-      {value: sellExpiry},
-      {value: buyExpiry},
-      {value: `${depths[depth]}`},
-      {value: `${orderType ? capitalizeFirstLetter(orderType.toLowerCase()) : '-'}`},
-      {value: '0'},
-      {value: '0'},
-      {value: '0'},
-      {value: '⭕'}
-    ];
 
-    cells.forEach(({value}) => {
-      const cell = row.insertCell();
-      cell.textContent = value;
-    });
-
-    // Add a Cancel button
-    const cancelCell = row.insertCell();
-    const cancelButton = document.createElement('button');
-    cancelButton.textContent = '✘';
-    cancelButton.addEventListener('click', () => cancelRow(row.id));
-    cancelCell.appendChild(cancelButton);
-
-    // Clear form inputs
-    clearForm()
+    // // Clear form inputs
+    // clearForm()
     
-    rowNumber++;
-    if(orderFlag){
-        orderNumber++
-    }
+    // rowNumber++;
+    // if(orderFlag){
+    //     orderNumber++
+    // }
     monitorRow({
         buyToken: getTokenFromSymbol(baseInstrument, buyExpiry, buyScript),
         sellToken: getTokenFromSymbol(baseInstrument, sellExpiry, sellScript),
         depth: depth,
         threshold: Number(Number(threshold).toFixed(2)),
-        rowId: row.id,
+        //rowId: row.id,
         quantity: quantity,
         orderFlag: orderFlag,
         buyScript: `${baseInstrument}${buyExpiry}${buyScript}`,
@@ -233,30 +204,10 @@ function clearForm(){
     }
 }
 
-function initTicker(credentials){
-    ticker = new WebSocketV2({
-        clientcode: credentials.ANGEL_USERNAME,
-        jwttoken: credentials.jwtToken,
-        apikey: credentials.ANGEL_API_KEY,
-        feedtype: credentials.feedToken
-    });
-    ticker.on("tick", handleTicks);
-    ticker.on("error", function(e) {
-      console.log("Error", e);
-    });
-}
-
-function postLoginSuccess(event){
-    let credentials = event.detail.credentials
-    initTicker(credentials)
-    document.getElementById('addFormButton').addEventListener('click', addNewRow);
-    // const calendarForm = document.getElementById('calendar-form')
+function postTickerInitialization(){
+    document.getElementById('addFormButton').addEventListener('click', onNewRow);
     document.getElementById('monitoring-form').style.display = 'block';
-    document.getElementById('alertsTable').style.display = 'block';
-    //document.getElementById('status').style.display = 'block';
-    //document.getElementById('status').textContent = 'Logged in as :' + credentials.ANGEL_USERNAME;
-    const myEvent = new CustomEvent('calender-loaded', {"detail":{}});
-    document.dispatchEvent(myEvent)
+    document.getElementById('tssTable').style.display = 'block';
 }
 
 function updatePrices(key, buyPrice, sellPrice, threshold, premiumLess){
@@ -268,166 +219,149 @@ function updatePrices(key, buyPrice, sellPrice, threshold, premiumLess){
     rowDoc.cells[indexes['status']].textContent = '🏃'
 }
 
-function placeOrder(order){
-    return getConnector().placeOrder({
-        "variety":"NORMAL",
-        "tradingsymbol":order.tradingsymbol,
-        "symboltoken":String(order.token),
-        "transactiontype":order.transactiontype,
-        "exchange":"NFO",
-        "ordertype":order.orderType,
-        "producttype":"CARRYFORWARD",
-        "duration":"DAY",
-        "price":order.price,
-        "quantity": String(order.quantity)
-    })
-}
+// function placeOrder(order){
+//     return getConnector().placeOrder({
+//         "variety":"NORMAL",
+//         "tradingsymbol":order.tradingsymbol,
+//         "symboltoken":String(order.token),
+//         "transactiontype":order.transactiontype,
+//         "exchange":"NFO",
+//         "ordertype":order.orderType,
+//         "producttype":"CARRYFORWARD",
+//         "duration":"DAY",
+//         "price":order.price,
+//         "quantity": String(order.quantity)
+//     })
+// }
 
-function parseResponse(resp){
-    let result = resp.result
-    if(resp.status == 'fulfilled'){
-        let angelResp = resp.value
-        console.log('Parse Resp Inside', angelResp)
-        result.msg += resp.ordertype + ' '
-        if(angelResp.message == 'SUCCESS'){
-            result.msg += 'Placed' + ' '
-        } else {
-            result.msg += angelResp.message + ' ' + angelResp.errorcode + ' '
-            result.success = false
-        }
+// function parseResponse(resp){
+//     let result = resp.result
+//     if(resp.status == 'fulfilled'){
+//         let angelResp = resp.value
+//         console.log('Parse Resp Inside', angelResp)
+//         result.msg += resp.ordertype + ' '
+//         if(angelResp.message == 'SUCCESS'){
+//             result.msg += 'Placed' + ' '
+//         } else {
+//             result.msg += angelResp.message + ' ' + angelResp.errorcode + ' '
+//             result.success = false
+//         }
 
-        if(angelResp.status && angelResp.data?.orderid){
-            resp.orders.push(angelResp.data.orderid)
-        } else {
-            result.success = false
-        }
-    }
-    //console.log('Parse Resp return', result, resp.orders)
-    return {result, orders:resp.orders}
-}
+//         if(angelResp.status && angelResp.data?.orderid){
+//             resp.orders.push(angelResp.data.orderid)
+//         } else {
+//             result.success = false
+//         }
+//     }
+//     //console.log('Parse Resp return', result, resp.orders)
+//     return {result, orders:resp.orders}
+// }
 
-async function placeCalenderOrder(buyOrder, sellOrder) {
-    console.log('Placing order ', JSON.stringify(buyOrder), JSON.stringify(sellOrder))  
-    let result = {msg : '', success: true}
-    let reponses = await Promise.allSettled([
-        placeOrder(buyOrder),
-        placeOrder(sellOrder),
-    ]).catch(ex => {
-        console.log("Orders failed ", ex)
-        return {msg: ex.message, success: false}
-    })
-    console.log("Response ", reponses)
-    let resp = parseResponse({...reponses[0], ordertype: 'BUY', result:result, orders: []}) 
-    resp = parseResponse({...reponses[1], ordertype: 'SELL', result:resp.result, orders: resp.orders})
+// async function placeCalenderOrder(buyOrder, sellOrder) {
+//     console.log('Placing order ', JSON.stringify(buyOrder), JSON.stringify(sellOrder))  
+//     let result = {msg : '', success: true}
+//     let reponses = await Promise.allSettled([
+//         placeOrder(buyOrder),
+//         placeOrder(sellOrder),
+//     ]).catch(ex => {
+//         console.log("Orders failed ", ex)
+//         return {msg: ex.message, success: false}
+//     })
+//     console.log("Response ", reponses)
+//     let resp = parseResponse({...reponses[0], ordertype: 'BUY', result:result, orders: []}) 
+//     resp = parseResponse({...reponses[1], ordertype: 'SELL', result:resp.result, orders: resp.orders})
        
-    return await getOrderBook(resp.orders, resp.result)
-}
+//     return await getOrderBook(resp.orders, resp.result)
+// }
 
-async function getOrderBook(orders, result){
-    //console.log("Given orders ", orders)
-    let fetchedOrders = await getConnector().getOrderBook().catch(err => {
-        return {
-            msg:result.msg + ' Unable to get Order book '+err, 
-            success: false
-        }
-    })
-    //console.log("Fetched orders ", fetchedOrders)
-    let executedOrders = fetchedOrders.data.filter(o => orders.includes(o.orderid))
-    if(orders.length != executedOrders.length){
-        result.msg = result.msg + ' Missing orders '+ orders + ' ' + executedOrders + ' '
-        result.success = false
-    }
-    executedOrders.forEach(o => {
-        if(o.orderstatus == 'rejected' || o.orderstatus == 'cancelled'){
-            result.msg = result.msg + `[${o.transactiontype} Status] :`+ o.status + ' ' + o.text + ' '
-            result.success = false
-        } else {
-            result.msg = result.msg +  o.transactiontype + '::'+ o.tradingsymbol + '::@' +o.price +' '+o.text + ' '
-        }
-    })
-    return result;
-}
+// async function getOrderBook(orders, result){
+//     //console.log("Given orders ", orders)
+//     let fetchedOrders = await getConnector().getOrderBook().catch(err => {
+//         return {
+//             msg:result.msg + ' Unable to get Order book '+err, 
+//             success: false
+//         }
+//     })
+//     //console.log("Fetched orders ", fetchedOrders)
+//     let executedOrders = fetchedOrders.data.filter(o => orders.includes(o.orderid))
+//     if(orders.length != executedOrders.length){
+//         result.msg = result.msg + ' Missing orders '+ orders + ' ' + executedOrders + ' '
+//         result.success = false
+//     }
+//     executedOrders.forEach(o => {
+//         if(o.orderstatus == 'rejected' || o.orderstatus == 'cancelled'){
+//             result.msg = result.msg + `[${o.transactiontype} Status] :`+ o.status + ' ' + o.text + ' '
+//             result.success = false
+//         } else {
+//             result.msg = result.msg +  o.transactiontype + '::'+ o.tradingsymbol + '::@' +o.price +' '+o.text + ' '
+//         }
+//     })
+//     return result;
+// }
 
-function isEligible(premiumLess, threshold, difference){
-    difference = Number(difference.toFixed(2))
-    return ((premiumLess && difference <= threshold) || (!premiumLess && difference >= threshold))
-}
+// function isEligible(premiumLess, threshold, difference){
+//     difference = Number(difference.toFixed(2))
+//     return ((premiumLess && difference <= threshold) || (!premiumLess && difference >= threshold))
+// }
 
-function isThresholdCrossed() {
-    const toBeDeletedKeys = []
-    //console.log(cache.legs)
-    Object.keys(cache).forEach(key => {
-        const leg = cache[key]
-        //console.log("Leg ", leg, "tokenPriceCache ",tokenPriceCache)
-        const buyPrice = tokenPriceCache[leg.buyToken]?.sellPrices[leg.depth]?.price || 0;
-        const sellPrice = tokenPriceCache[leg.sellToken]?.buyPrices[leg.depth]?.price || 0;
-        if(buyPrice > 0 && sellPrice > 0) {
-            const threshold = leg.threshold;
-            updatePrices(key, buyPrice, sellPrice, threshold, leg.premiumLess);
-            const difference = Math.abs(buyPrice - sellPrice);
-            if(isEligible(leg.premiumLess, threshold, difference)) {
-                console.log("Difference is less than threshold ");
-                // if(Object.keys(tokenPriceCache).length % 2 == 0) {
+// function isThresholdCrossed() {
+//     const toBeDeletedKeys = []
+//     //console.log(cache.legs)
+//     Object.keys(cache).forEach(key => {
+//         const leg = cache[key]
+//         //console.log("Leg ", leg, "tokenPriceCache ",tokenPriceCache)
+//         const buyPrice = tokenPriceCache[leg.buyToken]?.sellPrices[leg.depth]?.price || 0;
+//         const sellPrice = tokenPriceCache[leg.sellToken]?.buyPrices[leg.depth]?.price || 0;
+//         if(buyPrice > 0 && sellPrice > 0) {
+//             const threshold = leg.threshold;
+//             updatePrices(key, buyPrice, sellPrice, threshold, leg.premiumLess);
+//             const difference = Math.abs(buyPrice - sellPrice);
+//             if(isEligible(leg.premiumLess, threshold, difference)) {
+//                 console.log("Difference is less than threshold ");
+//                 // if(Object.keys(tokenPriceCache).length % 2 == 0) {
                 
-                toBeDeletedKeys.push(key)
-                const alertSound = document.getElementById(`alertSound`);
-                alertSound.play();
-                const rowDoc = document.getElementById(key);
-                // Add this line to change background color
-                rowDoc.cells[indexes['status']].textContent = '✔'
-                rowDoc.style.backgroundColor = '#D2F8D2';
+//                 toBeDeletedKeys.push(key)
+//                 const alertSound = document.getElementById(`alertSound`);
+//                 alertSound.play();
+//                 const rowDoc = document.getElementById(key);
+//                 // Add this line to change background color
+//                 rowDoc.cells[indexes['status']].textContent = '✔'
+//                 rowDoc.style.backgroundColor = '#D2F8D2';
 
-                if(leg.orderFlag){
-                    placeCalenderOrder({
-                        tradingsymbol: leg.buyScript,
-                        token: leg.buyToken,
-                        quantity: leg.quantity,
-                        transactiontype: 'BUY',
-                        orderType: leg.orderType,
-                        price: (Number(buyPrice) + 2).toFixed(2),
-                    }, {
-                        tradingsymbol: leg.sellScript,
-                        token: leg.sellToken,
-                        quantity: leg.quantity,
-                        transactiontype: 'SELL',
-                        orderType: leg.orderType,
-                        price: (Number(sellPrice) + 2).toFixed(2),
-                    }).then(result => {
-                        console.log("Order result ", result)
-                        if(result.success){
-                            rowDoc.cells[indexes['status']].textContent = '✔ '+ result.msg 
-                            rowDoc.style.backgroundColor = '#D2F8D2';
-                        } else {
-                            rowDoc.cells[indexes['status']].textContent = '❗'+result.msg
-                            rowDoc.style.backgroundColor = '#FBD9D3';
-                        }
-                    })
-                }
-            }
-        }
-    })
-    toBeDeletedKeys.forEach(key => {
-        removeCache(key)
-    })  
-}
+//                 if(leg.orderFlag){
+//                     placeCalenderOrder({
+//                         tradingsymbol: leg.buyScript,
+//                         token: leg.buyToken,
+//                         quantity: leg.quantity,
+//                         transactiontype: 'BUY',
+//                         orderType: leg.orderType,
+//                         price: (Number(buyPrice) + 2).toFixed(2),
+//                     }, {
+//                         tradingsymbol: leg.sellScript,
+//                         token: leg.sellToken,
+//                         quantity: leg.quantity,
+//                         transactiontype: 'SELL',
+//                         orderType: leg.orderType,
+//                         price: (Number(sellPrice) + 2).toFixed(2),
+//                     }).then(result => {
+//                         console.log("Order result ", result)
+//                         if(result.success){
+//                             rowDoc.cells[indexes['status']].textContent = '✔ '+ result.msg 
+//                             rowDoc.style.backgroundColor = '#D2F8D2';
+//                         } else {
+//                             rowDoc.cells[indexes['status']].textContent = '❗'+result.msg
+//                             rowDoc.style.backgroundColor = '#FBD9D3';
+//                         }
+//                     })
+//                 }
+//             }
+//         }
+//     })
+//     toBeDeletedKeys.forEach(key => {
+//         removeCache(key)
+//     })  
+// }
 
-function handleTicks(tick) {
-    //console.log("Ticks length", tick);
-    if (typeof tick === 'string') {
-        console.log("Recived ", tick)
-        return;
-    }
-    
-    // console.log("Tick", tick);
-    const instrumentToken = Number(tick.token);
-    if(tick?.best_5_buy_data?.length > 0){
-        tokenPriceCache[instrumentToken] = {
-          buyPrices: tick.best_5_buy_data,
-          sellPrices: tick.best_5_sell_data
-        }
-        isThresholdCrossed()
-    }
-}
 
 function getTokenFromSymbol(baseInstrument, expiry, script) {
     //expiry = expiry.substring(0, 5) + expiry.substring(7)
@@ -435,34 +369,6 @@ function getTokenFromSymbol(baseInstrument, expiry, script) {
     return baseInstrument === 'NIFTY' 
         ? Number(getNiftySymbols()[symbolKey]) 
         : Number(getBankNiftySymbols()[symbolKey]);
-}
-
-function tickerConnect(subscribe, tokens, rowId){
-    if(!ticker.isAlreadyConnected()){
-        ticker.connect().then(data=>{
-            console.log("New Connected....");
-            Object.keys(cache).forEach(key => {
-                subscribe([Number(cache[key].buyToken), Number(cache[key].sellToken)], key)
-            })
-          //subscribe(tokens, rowId)
-        }).catch(err1 => console.log("err1 :", err1));
-    } else {
-      subscribe(tokens, rowId);
-    }
-}
-
-function subscribe(tokens, rowId){
-    //console.log("Connected :", tokens.length);
-    if(tokens.length == 2) {
-      ticker.fetchData({
-          "correlationID": `Plug${rowId}`, 
-          "action":ACTION.Subscribe, 
-          "mode": MODE.SnapQuote, 
-          "exchangeType": EXCHANGES.nse_fo, 
-          "tokens": tokens
-        })
-      console.log("Subscribed: ",tokens)
-    }
 }
 
 document.getElementById('baseInstrument').addEventListener('change', function() {
@@ -516,31 +422,5 @@ document.getElementById('action').addEventListener('change', function() {
     }
 });
 
-document.addEventListener('login-success', postLoginSuccess);
-
-function scheduleDisconnectAt345PM() {
-    const now = new Date();
-    const targetTime = new Date();
-    targetTime.setHours(15, 45, 0);
-    //targetTime.setHours(7, 26, 0); 
-
-    if (now > targetTime) {
-        return
-    }
-
-    const timeUntilTarget = targetTime - now;
-    setTimeout(() => {
-        console.log('Clearing for the day')
-        if(ticker != null && ticker.isAlreadyConnected()){
-            ticker.disconnect()
-        }
-        Object.keys(cache).forEach(key => delete cache[key])
-        Object.keys(tokenCounter).forEach(key => delete tokenCounter[key])
-        Object.keys(tokenPriceCache).forEach(key => delete tokenPriceCache[key]) 
-        rowNumber = 1
-        orderNumber = 0
-        showOverlay()
-    }, timeUntilTarget);
-}
-
-scheduleDisconnectAt345PM()
+document.addEventListener('ticker-available', postTickerInitialization);
+//document.addEventListener('add-css-row', addNewRow);

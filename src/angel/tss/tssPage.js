@@ -1,3 +1,5 @@
+import { placeOrder } from "./position.js";
+
 let selectedPositions = [];
 let orderNumber = 0;
 const maxOrder = 2;
@@ -66,16 +68,18 @@ document.getElementById('add-target-stoploss-group')?.addEventListener('click', 
         obj[`leg-${i+1}`] = p
         return obj
     })
+
     let msgBody = {
         ...Object.assign({}, ...positions),
         targetPrice,
         stoplossPrice,
         action,
         orderType,
-        depth
+        depth,
+        algo: 'tss',
     }
     // Here you can add logic to process the target and stoploss
-    const myEvent = new CustomEvent('add-tss-leg', {
+    const myEvent = new CustomEvent('add-monitoring-leg', {
         "detail": msgBody
     });
     console.log('msgBody ', msgBody)

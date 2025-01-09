@@ -11,12 +11,7 @@ const messages = {
     10: 'If this plugin saved your day, how about buying me a pizza? Scan below to spread some love! 🍕☕💖'
 }
 
-document.addEventListener('calender-loaded', (event) => {
-    scheduleOverlayFor315PM();
-    document.getElementById('close-ad').addEventListener('click', closeOverlay);
-});
-
-function showOverlay() {
+export function showOverlay() {
     const messageNumber = Math.floor(Math.random() * 10) + 1;
     const randomMessage = messages[messageNumber];
     document.getElementById('ad').textContent = randomMessage;
@@ -35,7 +30,7 @@ function scheduleOverlayFor315PM() {
 
     const timeUntilTarget = targetTime - now;
     setTimeout(() => {
-        showOverlay();
+        showOverlay()
         // Schedule next day after showing
         scheduleOverlayFor315PM();
     }, timeUntilTarget);
@@ -44,3 +39,6 @@ function scheduleOverlayFor315PM() {
 function closeOverlay() {
     document.getElementById('hourlyOverlay').style.display = 'none';
 }
+
+scheduleOverlayFor315PM();
+document.getElementById('close-ad').addEventListener('click', closeOverlay);
