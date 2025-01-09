@@ -122,6 +122,7 @@ function handleOrderUpdate(event) {
     } else {
         row.cells[indexes['status']].textContent = '❌ ' + text;
         row.style.backgroundColor = '#F8DEDE';
+        document.getElementById('errorSound').play()
     }
 }
 
