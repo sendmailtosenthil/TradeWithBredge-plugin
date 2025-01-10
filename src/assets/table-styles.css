@@ -1,0 +1,34 @@
+#tssTable {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+  }
+  
+  #tssTable th {
+    font-family: Arial, sans-serif;
+    border: 1px solid #489726;
+    padding: 8px;
+    background-color: #4CAF50;
+    color: white;
+    font-size: 13px;
+  }
+  
+  #tssTable th:hover {
+    background-color: #39751f;
+  }
+
+  #tssTable tr {
+    font-size: 12px;
+  }
+  
+  #tssTable thead tr th:nth-child(1) { width: 30px; }   /* Action */
+  #tssTable thead tr th:nth-child(2) { width: 30px; }   /* Depth */
+  #tssTable thead tr th:nth-child(3) { width: 30px; }   /* Order Type */
+  #tssTable thead tr th:nth-child(4) { width: 100px; }  /* Leg 1 */
+  #tssTable thead tr th:nth-child(5) { width: 100px; }  /* Leg 2 */
+  #tssTable thead tr th:nth-child(6) { width: 100px; }  /* Leg 3 */
+  #tssTable thead tr th:nth-child(7) { width: 100px; }  /* Leg 4 */
+  #tssTable thead tr th:nth-child(8) { width: 150px; }   /* PNL */
+  #tssTable thead tr th:nth-child(9) { width: 30px; }  /* Status */
+  #tssTable thead tr th:nth-child(10) { width: 30px; } /* Your Action */
+  

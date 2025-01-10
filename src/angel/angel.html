@@ -4,291 +4,25 @@
   <meta charset="UTF-8">
   <title>Angel Ticker</title>
   <link rel="stylesheet" href="../assets/tabs.css">
-  <style>
-    /* Global Resets and Base Styles */
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      font-size: 13px;
-    }
-
-    /* Form Containers */
-    .form-container {
-      background: #ffffff;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-      border-radius: 8px;
-      padding: 12px;
-      margin-bottom: 3px;
-    }
-
-    .form-row {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 5px;
-      background: #f8f9fa;
-      border-radius: 4px;
-      padding: 8px 4px;
-      width: 99%;
-    }
-
-    .form-row span {
-      margin: 0 5px;
-      font-size: 13px;
-    }
-
-    /* Input Styles */
-    input,
-    select {
-      padding: 4px 8px;
-      border: 1px solid #dce4ec;
-      border-radius: 4px;
-      font-size: 13px;
-      font-family: inherit;
-    }
-
-    input:focus,
-    select:focus {
-      border-color: #4CAF50;
-      outline: none;
-      box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
-    }
-
-    /* Button Styles */
-    button {
-      padding: 8px;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      width: 100%;
-    }
-
-    button:hover {
-      background: linear-gradient(45deg, #45a049, #4CAF50);
-    }
-
-    /* Table Styles */
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-      box-shadow: 0 1px 8px rgba(0, 0, 0, 0.1);
-      border-radius: 8px;
-      overflow: hidden;
-    }
-
-    th,
-    td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      text-align: left;
-    }
-
-    th {
-      background: #4CAF50;
-      color: white;
-      font-weight: 500;
-      font-size: 14px;
-    }
-
-    tr:nth-child(even) {
-      background-color: #f9f9f9;
-    }
-
-    /* Page Layout */
-    .page-container {
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
-
-    .top-section {
-      height: 22%;
-      overflow: hidden;
-    }
-
-    .bottom-section {
-      height: 70%;
-      overflow: auto;
-    }
-
-    /* Overlay Styles */
-    .overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
-    }
-
-    .overlay-content {
-      background: white;
-      padding: 30px;
-      border-radius: 8px;
-      text-align: center;
-      max-width: 80%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    /* Specific Element Styles */
-    #connect-form input {
-      width: 200px;
-      margin-right: 10px;
-      margin-bottom: 10px;
-    }
-
-    #addFormButton {
-      width: auto;
-      padding: 4px 8px;
-      font-size: 13px;
-      margin: 0;
-      background-color: #4CAF50;
-      /* This will make the button green */
-      color: white;
-      /* Ensures white text for readability */
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-
-    #addFormButton:hover {
-      background: linear-gradient(45deg, #45a049, #4CAF50);
-      /* Optional: add a hover effect */
-    }
-
-    .retain-section {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      width: 100%;
-      gap: 10px;
-      /* Add some space between elements */
-      margin-top: 10px;
-      /* Optional: add some top margin */
-    }
-
-    .retain-section span {
-      margin-right: 5px;
-      /* Optional: add some space between 'Retain values' text and checkbox */
-    }
-
-    ::placeholder {
-      color: #a0a0a0;
-      font-style: italic;
-      opacity: 0.7;
-      font-size: 10px;
-    }
-
-    #alertsTableBody {
-      font-size: 13px;
-    }
-
-    #strike {
-      width: 80px;
-    }
-
-    #threshold {
-      width: 80px;
-    }
-
-    #positions-overlay {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
-
-    #positions-content {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      width: 80%;
-      max-width: 800px;
-      max-height: 80%;
-      overflow: auto;
-    }
-
-    #positions-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    #group-positions {
-      padding: 10px;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      margin-right: 10px;
-    }
-
-    #close-positions {
-      padding: 10px;
-      background-color: #f44336;
-      color: white;
-      border: none;
-      border-radius: 5px;
-    }
-
-    #alertsTableBody,
-    #tssTableBody {
-      font-size: 13px;
-    }
-
-    #alertsTable td,
-    #tssTable td {
-      font-size: 13px;
-      padding: 8px;
-      text-align: left;
-    }
-
-    .leg-text {
-      word-wrap: break-word;
-      white-space: normal;
-      max-width: 200px;
-      /* Optional: set a max-width to control the wrapping */
-    }
-
-    #tssTableBody td:nth-child(8) span {
-      display: block;
-      width: 100%;
-      white-space: normal;
-      word-wrap: break-word;
-      overflow-wrap: break-word;
-    }
-  </style>
+  <link rel="stylesheet" href="../assets/styles.css">
+  <link rel="stylesheet" href="../assets/table-styles.css">
 </head>
 
 <body>
   <div id="connect-form" style="display: block;">
     <div class="form-container">
-      <input type="text" id="username" placeholder="Angel Username" value="K494385" />
+      <input type="text" id="username" placeholder="Angel Username" value="" />
       <input type="password" id="password" placeholder="Angel MPIN" />
-      <input type="password" id="apiKey" placeholder="Angel API Key" value="BCLCBoPN" />
-      <input type="password" id="totpSecret" placeholder="TOTP Secret" value="Z4ATWYOCPFKDNI7HEQPQWQ3DPU" />
+      <input type="password" id="apiKey" placeholder="Angel API Key" value="" />
+      <input type="password" id="totpSecret" placeholder="TOTP Secret" value="" />
       <input type="hidden" id="attempt" value="1" />
-      <button id="connect">Connect</button>
+    </div>
+    <div class="retain-section">
+      <button id="connect" class="all-buttons">Connect To Angel One</button>
     </div>
     <div style="margin-bottom: 20px;">
       <a href="https://youtu.be/xyrgbBivVDE" target="_blank">
-        <button style="background: #03dd4c; width: 20%;">
+        <button class="all-buttons">
           Watch Setup Video Guide
         </button>
       </a>
@@ -303,7 +37,7 @@
     </div>
   </div>
 
-  <div class="page-container" style="display: block;">
+  <div class="page-container" id="main-section" style="display: none;">
     <!-- Tab Navigation -->
     <div class="tab-container">
       <div class="tab active" data-tab="calendar-spread">Calendar Spread</div>
@@ -406,9 +140,9 @@
                   <option value="order">Place Order 🚚</option>
                 </select>
                 <span>for target of</span>
-                <input type="number" id="tss-target" placeholder="1000">
+                <input type="number" id="tss-target" placeholder="1000" class="all-textboxes">
                 <span>and stop loss of</span>
-                <input type="number" id="tss-stoploss" placeholder="-1500">
+                <input type="number" id="tss-stoploss" placeholder="-1500" class="all-textboxes">
                 <span>based on </span>
                 <select id="tss-depth">
                   <option value="">Select</option>
@@ -431,12 +165,12 @@
                 </div>
 
               </div>
-              <div class="form-row">
+              <div class="retain-section">
                 <span>Show verbose</span>
                 <input type="checkbox" id="tss-verbose">
-                <input type="button" id="add-target-stoploss-group" value="Add Group" />
-                <input type="button" id="clear-group" value="Clear Group" />
-                <input type="button" id="openPositions" value="Open My Positions" />
+                <input type="button" class="all-buttons" id="add-target-stoploss-group" value="Add Group" />
+                <input type="button" class="all-buttons" id="clear-group" value="Clear Group" />
+                <input type="button" class="all-buttons" id="openPositions" value="Open My Positions" />
               </div>
             </div>
           </div>
@@ -499,10 +233,10 @@
         </table>
       </div>
       <div class="table-content">
-        <table id="tssTable" style="display: none;">
+        <table id="tssTable">
           <thead>
             <tr>
-              <th>Action</th>
+              <th>Info</th>
               <th>Depth</th>
               <th>Order Type</th>
               <th>Leg 1</th>
@@ -511,7 +245,7 @@
               <th>Leg 4</th>
               <th>PNL</th>
               <th>Status</th>
-              <th>Your Action</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody id="tssTableBody">

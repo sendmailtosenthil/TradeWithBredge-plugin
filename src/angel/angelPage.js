@@ -191,8 +191,8 @@ function onNewRow() {
 
 function displayCSSForm(){
     document.getElementById('addFormButton').addEventListener('click', onNewRow);
-    document.getElementById('monitoring-form').style.display = 'block';
-    document.getElementById('tssTable').style.display = 'block';
+    document.getElementById('main-section').style.display = 'block';
+    // document.getElementById('tssTable').style.display = 'block';
 }
 
 function getTokenFromSymbol(baseInstrument, expiry, script) {
@@ -201,6 +201,13 @@ function getTokenFromSymbol(baseInstrument, expiry, script) {
     return baseInstrument === 'NIFTY' 
         ? Number(getNiftySymbols()[symbolKey]) 
         : Number(getBankNiftySymbols()[symbolKey]);
+}
+
+function setFormWithRow(event){
+    const group = event.detail.group;
+    if(group){
+        console.log('Yet to implement')
+    }
 }
 
 document.getElementById('baseInstrument').addEventListener('change', function() {
@@ -255,4 +262,4 @@ document.getElementById('action').addEventListener('change', function() {
 });
 
 document.addEventListener('ticker-available', displayCSSForm);
-//document.addEventListener('add-css-row', addNewRow);
+document.addEventListener('copy-row-css', setFormWithRow);

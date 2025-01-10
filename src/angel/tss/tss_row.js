@@ -7,18 +7,82 @@ const indexes = {
     action: 9
 }
 
+function copyToForm(group){
+    // Publish event with dynamic name based on strategy
+    const copyEventName = `copy-row-${group.algo}`;
+    const copyEvent = new CustomEvent(copyEventName, {
+        detail: {
+            rowId: group.rowId,
+            group: group // Pass the entire leg data
+        }
+    });
+    document.dispatchEvent(copyEvent);
+    console.log(`Published event: ${copyEventName}`, tssLeg);
+}
+
+function createActionCell(tssLeg) {
+    const actionCell = document.createElement('div');
+    actionCell.className = 'action-cell';
+
+    // Define action icons and their handlers
+    const actions = [
+        {
+            icon: '⛔',
+            tooltip: 'Stop',
+            handler: () => cancelRow(tssLeg.rowId)
+        },
+        {
+            icon: '✘',
+            tooltip: 'Remove',
+            handler: () => {
+                cancelRow(tssLeg.rowId);
+                const row = document.getElementById(tssLeg.rowId);
+                row?.remove();
+            }
+        },
+        // {
+        //     icon: '📋',
+        //     tooltip: 'Copy',
+        //     handler: () => copyToForm(tssLeg)
+        // }
+    ];
+
+    // Create clickable action icons with tooltips
+    actions.forEach(action => {
+        const actionWrapper = document.createElement('span');
+        actionWrapper.className = 'action-icon-wrapper';
+
+        const actionIcon = document.createElement('span');
+        actionIcon.textContent = action.icon;
+        actionIcon.className = 'action-icon';
+
+        // Create tooltip element
+        const tooltip = document.createElement('span');
+        tooltip.textContent = action.tooltip;
+        tooltip.className = 'action-tooltip';
+
+        actionIcon.addEventListener('click', action.handler);
+
+        actionWrapper.appendChild(actionIcon);
+        actionWrapper.appendChild(tooltip);
+        actionCell.appendChild(actionWrapper);
+    });
+
+    return actionCell;
+}
+
 function cancelRow(rowId) {
     const row = document.getElementById(rowId);
     console.log('Cancel Row', row, getCache(), rowId)
     if (row && getCache()[rowId]) {
         row.cells[indexes['status']].textContent = '🛑';
         row.style.backgroundColor = '#FFFFC5';
-        row.cells[indexes['action']].textContent = '';
+        //row.cells[indexes['action']].textContent = '';
+        const myEvent = new CustomEvent('remove-monitoring-leg', {
+            "detail": rowId
+        })
+        document.dispatchEvent(myEvent)
     }
-    const myEvent = new CustomEvent('remove-monitoring-leg', {
-        "detail": rowId
-    })
-    document.dispatchEvent(myEvent)
 }
 
 function buildLegs(group) {
@@ -85,12 +149,17 @@ function handleRowAddition(event) {
     });
     //updateMonitoringText(row, cells[indexes['monitoring']].innerHTML)
 
+    // Add action cell with multiple icons
+    const actionCell = row.insertCell();
+    const actionIcons = createActionCell(tssLeg);
+    actionCell.appendChild(actionIcons);
+
     // Add a Cancel button
-    const cancelCell = row.insertCell();
-    const cancelButton = document.createElement('button');
-    cancelButton.textContent = '✘';
-    cancelButton.addEventListener('click', () => cancelRow(tssLeg.rowId));
-    cancelCell.appendChild(cancelButton);
+    // const cancelCell = row.insertCell();
+    // const cancelButton = document.createElement('button');
+    // cancelButton.textContent = '✘';
+    // cancelButton.addEventListener('click', () => cancelRow(tssLeg.rowId));
+    // cancelCell.appendChild(cancelButton);
 
     // Clear form inputs
     // clearForm()
@@ -99,7 +168,7 @@ function handleRowAddition(event) {
 function handleTriggered(rowId){
     const row = document.getElementById(rowId);
     row.cells[indexes['status']].textContent = '✅'
-    row.cells[indexes['action']].textContent = ''
+    //row.cells[indexes['action']].textContent = ''
     row.style.backgroundColor = '#D2F8D2';
     document.dispatchEvent(new CustomEvent('remove-monitoring-leg', {
         'detail': rowId

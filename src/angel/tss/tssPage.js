@@ -132,7 +132,7 @@ document.getElementById('add-target-stoploss-group')?.addEventListener('click', 
                 let currentValue = 0
                 let detailTxt = ''
                 //console.log('Working leg', leg, allPrices)
-                if(leg.transactiontype == 'BUY'){
+                if(leg.transactiontype == 'SELL'){
                     perPrice = allPrices?.sellPrices[depth]?.price || 0
                     currentValue = (Number(leg.price) - Number(perPrice)) * Number(leg.quantity)
                     detailTxt = `(${Number(leg.price).toFixed(2)} - ${Number(perPrice).toFixed(2)}) * ${leg.quantity} = ${currentValue.toFixed(2)}`
