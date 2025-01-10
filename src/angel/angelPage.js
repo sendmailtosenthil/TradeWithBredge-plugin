@@ -4,7 +4,7 @@ import {placeOrders} from './angel_connect_wrapper.js'
 
 const quantities = {
     'NIFTY': [75, 150, 225],
-    'BANKNIFTY': [30, 60, 90]
+    'BANKNIFTY': [30, 60, 90, 120, 150]
 }
   
 let maxOrder = 2;
@@ -64,7 +64,11 @@ function monitorRow(row){
                 const buyPrice = criteriaResult.leg_1_price || 0
                 const sellPrice = criteriaResult.leg_2_price || 0
                 const diff = criteriaResult.diff || 0
-                return `(${buyPrice}-${sellPrice}) ➛ ${diff} ${row.premiumLess ? '<=' : '>='} ${row.threshold}`
+                if(this.verbose){
+                    return `(${buyPrice}-${sellPrice}) ➛ <br>${diff} ${row.premiumLess ? '<=' : '>='} ${row.threshold}`
+                } else {
+                    return `${diff} ${row.premiumLess ? '<=' : '>='} ${row.threshold}`
+                }
             },
             noOfLeg: 2,
             algo:'css',
@@ -73,20 +77,10 @@ function monitorRow(row){
             orderType: row.orderType,
             premiumLess: row.premiumLess,
             threshold: row.threshold,
-            tokens: [Number(row.buyToken), Number(row.sellToken)]
+            tokens: [Number(row.buyToken), Number(row.sellToken)],
+            verbose: row.verbose
         }
     })
-    document.dispatchEvent(myEvent)
-}
-
-function cancelRow(rowId) {
-    const row = document.getElementById(rowId);
-    if (row && cache[rowId]) {
-        row.cells[indexes['status']].textContent = '🛑';
-        row.style.backgroundColor = '#FFFFC5';
-        row.cells[indexes['action']].textContent = '';
-    }
-    const myEvent = CustomEvent('remove-monitoring-leg', {'detail':rowId})
     document.dispatchEvent(myEvent)
 }
 
@@ -168,6 +162,7 @@ function onNewRow() {
     const threshold = document.getElementById('threshold').value;
     const depth = document.getElementById('depth').value;
     const orderType = document.getElementById('orderType')?.value;
+    const verbose = document.getElementById('verbose')?.checked;
     const buyScript = `${strike}${optionType}`;
     const sellScript = buyScript
 
@@ -190,178 +185,15 @@ function onNewRow() {
         sellScript: `${baseInstrument}${sellExpiry}${sellScript}`,
         premiumLess: premiumLess == 'lt' ? true : false,
         orderType: orderType.toUpperCase(),
+        verbose: verbose,
     })
 }
 
-function clearForm(){
-    const retain = document.getElementById('retain').checked;
-    if(retain){
-        document.getElementById('depth').value = '';
-        document.getElementById('threshold').value = '';
-        document.getElementById('premiumLess').value = '';
-        document.getElementById('action').value = '';
-        return
-    }
-}
-
-function postTickerInitialization(){
+function displayCSSForm(){
     document.getElementById('addFormButton').addEventListener('click', onNewRow);
     document.getElementById('monitoring-form').style.display = 'block';
     document.getElementById('tssTable').style.display = 'block';
 }
-
-function updatePrices(key, buyPrice, sellPrice, threshold, premiumLess){
-    const rowDoc = document.getElementById(key);
-    rowDoc.cells[indexes['buyPrice']].textContent = buyPrice;
-    rowDoc.cells[indexes['sellPrice']].textContent = sellPrice;
-    const difference = Number(Math.abs(buyPrice - sellPrice).toFixed(2));
-    rowDoc.cells[indexes['difference']].textContent = `${premiumLess ? threshold +' < ' + difference: threshold +' > ' + difference}`;
-    rowDoc.cells[indexes['status']].textContent = '🏃'
-}
-
-// function placeOrder(order){
-//     return getConnector().placeOrder({
-//         "variety":"NORMAL",
-//         "tradingsymbol":order.tradingsymbol,
-//         "symboltoken":String(order.token),
-//         "transactiontype":order.transactiontype,
-//         "exchange":"NFO",
-//         "ordertype":order.orderType,
-//         "producttype":"CARRYFORWARD",
-//         "duration":"DAY",
-//         "price":order.price,
-//         "quantity": String(order.quantity)
-//     })
-// }
-
-// function parseResponse(resp){
-//     let result = resp.result
-//     if(resp.status == 'fulfilled'){
-//         let angelResp = resp.value
-//         console.log('Parse Resp Inside', angelResp)
-//         result.msg += resp.ordertype + ' '
-//         if(angelResp.message == 'SUCCESS'){
-//             result.msg += 'Placed' + ' '
-//         } else {
-//             result.msg += angelResp.message + ' ' + angelResp.errorcode + ' '
-//             result.success = false
-//         }
-
-//         if(angelResp.status && angelResp.data?.orderid){
-//             resp.orders.push(angelResp.data.orderid)
-//         } else {
-//             result.success = false
-//         }
-//     }
-//     //console.log('Parse Resp return', result, resp.orders)
-//     return {result, orders:resp.orders}
-// }
-
-// async function placeCalenderOrder(buyOrder, sellOrder) {
-//     console.log('Placing order ', JSON.stringify(buyOrder), JSON.stringify(sellOrder))  
-//     let result = {msg : '', success: true}
-//     let reponses = await Promise.allSettled([
-//         placeOrder(buyOrder),
-//         placeOrder(sellOrder),
-//     ]).catch(ex => {
-//         console.log("Orders failed ", ex)
-//         return {msg: ex.message, success: false}
-//     })
-//     console.log("Response ", reponses)
-//     let resp = parseResponse({...reponses[0], ordertype: 'BUY', result:result, orders: []}) 
-//     resp = parseResponse({...reponses[1], ordertype: 'SELL', result:resp.result, orders: resp.orders})
-       
-//     return await getOrderBook(resp.orders, resp.result)
-// }
-
-// async function getOrderBook(orders, result){
-//     //console.log("Given orders ", orders)
-//     let fetchedOrders = await getConnector().getOrderBook().catch(err => {
-//         return {
-//             msg:result.msg + ' Unable to get Order book '+err, 
-//             success: false
-//         }
-//     })
-//     //console.log("Fetched orders ", fetchedOrders)
-//     let executedOrders = fetchedOrders.data.filter(o => orders.includes(o.orderid))
-//     if(orders.length != executedOrders.length){
-//         result.msg = result.msg + ' Missing orders '+ orders + ' ' + executedOrders + ' '
-//         result.success = false
-//     }
-//     executedOrders.forEach(o => {
-//         if(o.orderstatus == 'rejected' || o.orderstatus == 'cancelled'){
-//             result.msg = result.msg + `[${o.transactiontype} Status] :`+ o.status + ' ' + o.text + ' '
-//             result.success = false
-//         } else {
-//             result.msg = result.msg +  o.transactiontype + '::'+ o.tradingsymbol + '::@' +o.price +' '+o.text + ' '
-//         }
-//     })
-//     return result;
-// }
-
-// function isEligible(premiumLess, threshold, difference){
-//     difference = Number(difference.toFixed(2))
-//     return ((premiumLess && difference <= threshold) || (!premiumLess && difference >= threshold))
-// }
-
-// function isThresholdCrossed() {
-//     const toBeDeletedKeys = []
-//     //console.log(cache.legs)
-//     Object.keys(cache).forEach(key => {
-//         const leg = cache[key]
-//         //console.log("Leg ", leg, "tokenPriceCache ",tokenPriceCache)
-//         const buyPrice = tokenPriceCache[leg.buyToken]?.sellPrices[leg.depth]?.price || 0;
-//         const sellPrice = tokenPriceCache[leg.sellToken]?.buyPrices[leg.depth]?.price || 0;
-//         if(buyPrice > 0 && sellPrice > 0) {
-//             const threshold = leg.threshold;
-//             updatePrices(key, buyPrice, sellPrice, threshold, leg.premiumLess);
-//             const difference = Math.abs(buyPrice - sellPrice);
-//             if(isEligible(leg.premiumLess, threshold, difference)) {
-//                 console.log("Difference is less than threshold ");
-//                 // if(Object.keys(tokenPriceCache).length % 2 == 0) {
-                
-//                 toBeDeletedKeys.push(key)
-//                 const alertSound = document.getElementById(`alertSound`);
-//                 alertSound.play();
-//                 const rowDoc = document.getElementById(key);
-//                 // Add this line to change background color
-//                 rowDoc.cells[indexes['status']].textContent = '✔'
-//                 rowDoc.style.backgroundColor = '#D2F8D2';
-
-//                 if(leg.orderFlag){
-//                     placeCalenderOrder({
-//                         tradingsymbol: leg.buyScript,
-//                         token: leg.buyToken,
-//                         quantity: leg.quantity,
-//                         transactiontype: 'BUY',
-//                         orderType: leg.orderType,
-//                         price: (Number(buyPrice) + 2).toFixed(2),
-//                     }, {
-//                         tradingsymbol: leg.sellScript,
-//                         token: leg.sellToken,
-//                         quantity: leg.quantity,
-//                         transactiontype: 'SELL',
-//                         orderType: leg.orderType,
-//                         price: (Number(sellPrice) + 2).toFixed(2),
-//                     }).then(result => {
-//                         console.log("Order result ", result)
-//                         if(result.success){
-//                             rowDoc.cells[indexes['status']].textContent = '✔ '+ result.msg 
-//                             rowDoc.style.backgroundColor = '#D2F8D2';
-//                         } else {
-//                             rowDoc.cells[indexes['status']].textContent = '❗'+result.msg
-//                             rowDoc.style.backgroundColor = '#FBD9D3';
-//                         }
-//                     })
-//                 }
-//             }
-//         }
-//     })
-//     toBeDeletedKeys.forEach(key => {
-//         removeCache(key)
-//     })  
-// }
-
 
 function getTokenFromSymbol(baseInstrument, expiry, script) {
     //expiry = expiry.substring(0, 5) + expiry.substring(7)
@@ -422,5 +254,5 @@ document.getElementById('action').addEventListener('change', function() {
     }
 });
 
-document.addEventListener('ticker-available', postTickerInitialization);
+document.addEventListener('ticker-available', displayCSSForm);
 //document.addEventListener('add-css-row', addNewRow);

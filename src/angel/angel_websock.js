@@ -11,12 +11,15 @@ function handleTicks(tick) {
         return;
     }
     if(tick?.best_5_buy_data?.length > 0){
+        //{flag: 1, quantity: 450, price: 236.65, no_of_orders: 1
+        const ltpTick = {falg:0, quantity:0, no_of_orders: 0, price:tick.last_traded_price}
         const tickEvent = new CustomEvent('new-price-arrived', {"detail":[{
             symboltoken:Number(tick.token),
-            buy_5: tick.best_5_buy_data,
-            sell_5: tick.best_5_sell_data,
+            buy_5: [ltpTick, ...tick.best_5_buy_data],
+            sell_5:[ltpTick, ...tick.best_5_sell_data],
             ltp: tick.last_traded_price,
         }]})
+        //console.log("Dispatching tick event", tickEvent)
         document.dispatchEvent(tickEvent)
     }
 }

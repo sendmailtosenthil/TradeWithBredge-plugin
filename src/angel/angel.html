@@ -265,6 +265,14 @@
       max-width: 200px;
       /* Optional: set a max-width to control the wrapping */
     }
+
+    #tssTableBody td:nth-child(8) span {
+      display: block;
+      width: 100%;
+      white-space: normal;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
   </style>
 </head>
 
@@ -350,11 +358,12 @@
             <span>based on </span>
             <select id="depth">
               <option value="">Select</option>
-              <option value="0">first</option>
-              <option value="1">second</option>
-              <option value="2">third</option>
-              <option value="3">fourth</option>
-              <option value="4">fifth</option>
+              <option value="0">ltp</option>
+              <option value="1">first</option>
+              <option value="2">second</option>
+              <option value="3">third</option>
+              <option value="4">fourth</option>
+              <option value="5">fifth</option>
             </select>
             <span>depth</span>
             <div id="action-depth" style="display: none;">
@@ -369,8 +378,8 @@
             <span>.</span>
           </div>
           <div class="retain-section">
-            <span>Retain values for next order</span>
-            <input type="checkbox" id="retain">
+            <span>Show verbose</span>
+            <input type="checkbox" id="verbose">
             <input type="button" id="addFormButton" value="✓ Add Leg" />
           </div>
         </div>
@@ -397,17 +406,18 @@
                   <option value="order">Place Order 🚚</option>
                 </select>
                 <span>for target of</span>
-                <input type="number" id="target-price" placeholder="1000">
+                <input type="number" id="tss-target" placeholder="1000">
                 <span>and stop loss of</span>
-                <input type="number" id="stoploss-price" placeholder="1500">
+                <input type="number" id="tss-stoploss" placeholder="-1500">
                 <span>based on </span>
                 <select id="tss-depth">
                   <option value="">Select</option>
-                  <option value="0">first</option>
-                  <option value="1">second</option>
-                  <option value="2">third</option>
-                  <option value="3">fourth</option>
-                  <option value="4">fifth</option>
+                  <option value="0">ltp</option>
+                  <option value="1">first</option>
+                  <option value="2">second</option>
+                  <option value="3">third</option>
+                  <option value="4">fourth</option>
+                  <option value="5">fifth</option>
                 </select>
                 <span>depth</span>
                 <div id="tss-action-order" style="display: none;">
@@ -422,6 +432,8 @@
 
               </div>
               <div class="form-row">
+                <span>Show verbose</span>
+                <input type="checkbox" id="tss-verbose">
                 <input type="button" id="add-target-stoploss-group" value="Add Group" />
                 <input type="button" id="clear-group" value="Clear Group" />
                 <input type="button" id="openPositions" value="Open My Positions" />

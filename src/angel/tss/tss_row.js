@@ -26,10 +26,10 @@ function buildLegs(group) {
     for (let i = 1; i <= group.noOfLeg; i++) {
         let leg = group[`leg_${i}`]()
         if (leg?.transactiontype) {
-            let tradingsymbol = leg.tradingsymbol.replace(/([A-Z]+)(\d{2}[A-Z]{3}\d{2})(\d+)([A-Z]{2})/, '$1 $2 $3 $4')
+            let tradingsymbol = group.verbose ? leg.tradingsymbol.replace(/([A-Z]+)(\d{2}[A-Z]{3}\d{2})(\d+)([A-Z]{2})/, '$1 $2 $3 $4') : leg.tradingsymbol.replace(/([A-Z]+)(\d{2}[A-Z]{3}\d{2})(\d+)([A-Z]{2})/, '$2 $3 $4')
             legs.push({
                 value: {
-                    text: `${leg.transactiontype == 'BUY' ? '👜' : '💳'} ${capitalizeFirstLetter(tradingsymbol)} ${leg.quantity ? ' of ' + leg.quantity + ' units': ''}  ${leg.price? ' @ ' + leg.price : ''}`,
+                    text: `${leg.transactiontype == 'BUY' ? '👜' : '💳'} ${capitalizeFirstLetter(tradingsymbol)} ${group.verbose ? (leg.quantity ? ' of ' + leg.quantity + ' units': ''):''}  ${leg.price? ' @ ' + leg.price : ''}`,
                     class: 'leg-text'
                 }
             })
@@ -47,6 +47,16 @@ function buildLegs(group) {
     return legs
 }
 
+function strategyIcon(algo){
+    switch(algo){
+        case 'tss':
+            return '🎯'
+        case 'css':
+            return '📅'
+        default:
+            return ''
+    }
+}
 function handleRowAddition(event) {
     const tssLeg = event.detail
     console.log('Row Addition', tssLeg)
@@ -54,9 +64,9 @@ function handleRowAddition(event) {
     const tssTableBody = document.getElementById('tssTableBody');
     const row = tssTableBody.insertRow();
     row.id = tssLeg.rowId;
-
+    const strat = strategyIcon(tssLeg.algo)
     const cells = [
-        { value: `${tssLeg['action'] == 'order' ? '🚚' : '🔔'}` },
+        { value: `${strat} ${tssLeg['action'] == 'order' ? '🚚' : '🔔'}` },
         { value: `${PLUGIN.depths[tssLeg['depth']]}` },
         { value: capitalizeFirstLetter(tssLeg['orderType']) },
         ...buildLegs(tssLeg),
@@ -69,10 +79,11 @@ function handleRowAddition(event) {
         if (typeof value === 'string') {
             cell.textContent = value;
         } else {
-            cell.textContent = value.text;
+            cell.innerHTML = value.text;
             cell.className = value.class;
         }
     });
+    //updateMonitoringText(row, cells[indexes['monitoring']].innerHTML)
 
     // Add a Cancel button
     const cancelCell = row.insertCell();
@@ -96,6 +107,13 @@ function handleTriggered(rowId){
     document.getElementById('alertSound').play()
 }
 
+function updateMonitoringText(row, text){
+    const wrappedText = text.split(/<br\s*\/?>/).map(part => 
+        `<span>${part}</span>`
+    ).join('');
+    row.cells[indexes['monitoring']].innerHTML = wrappedText;
+}
+
 function updatePrices(event) {
     const rowId = event.detail.rowId
     const text = event.detail.text
@@ -103,7 +121,8 @@ function updatePrices(event) {
     //console.log('Update Prices', event.detail)
     const row = document.getElementById(rowId);
     if (row && getCache()[rowId]) {
-        row.cells[indexes['monitoring']].textContent = text;
+        // Wrap the text in spans
+        updateMonitoringText(row, text)
         row.cells[indexes['status']].textContent = '🏃';
     }
     if(triggered){

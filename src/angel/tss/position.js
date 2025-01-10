@@ -6,21 +6,21 @@ function runMock(){
         tradingsymbol: "BANKNIFTY30JAN2550000CE",
         quantity: 30,
         price: 100,
-        token: "39510"
+        symboltoken: "39510"
     },
     {
         transactiontype: "SELL",
         tradingsymbol: "BANKNIFTY30JAN2549900CE",
         quantity: 30,
         price: 130,
-        token: "39508"
+        symboltoken: "39508"
     },
     {
         transactiontype: "SELL",
         tradingsymbol: "BANKNIFTY30JAN2552900CE",
         quantity: 60,
         price: 150,
-        token: "39583"
+        symboltoken: "39583"
     }]
     const myEvent = new CustomEvent("selected-positions", {"detail":{"positions": selectedPositions}});
     document.dispatchEvent(myEvent)
@@ -37,7 +37,7 @@ document.getElementById('openPositions')?.addEventListener('click', async ()=>{
             tradingsymbol: p.tradingsymbol,
             quantity: Math.abs(p.netqty),
             price: p.netprice,
-            token: symboltoken
+            symboltoken: p.symboltoken
         }
     })
 
@@ -94,7 +94,7 @@ function populatePositionsOverlay(positions) {
             selectedPositions.push(positions[index]);
         });
 
-        console.log('Selected Positions:', selectedPositions);
+        //console.log('Selected Positions:', selectedPositions);
         const myEvent = new CustomEvent("selected-positions", {"detail":{"positions": selectedPositions}});
         document.dispatchEvent(myEvent)
         overlay.style.display = 'none';
